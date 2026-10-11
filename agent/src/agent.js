@@ -28,10 +28,12 @@ export class GeorgioAgent extends AbstractAgent {
     emit({ type: EventType.RUN_STARTED, threadId, runId });
     emit({ type: EventType.TEXT_MESSAGE_START, messageId, role: "assistant" });
     try {
-      const { mode, prompt } = extractPrompt(messages);
+      const { mode, prompt, history } = extractPrompt(messages);
       const labels = { tanya: "Ngobrol", ringkas: "Ringkas", ide: "Ide" };
       let reply = "";
-      try { reply = await callFreeAI(mode, prompt); } catch { /* fallback */ }
+      try {
+        reply = await callFreeAI(mode, history?.length ? history : [{ role: "user", content: prompt }]);
+      } catch { /* fallback ke brain deterministik */ }
       if (!reply) reply = generateReply(mode, prompt);
       const header = `${labels[mode]} · Georgio AI\n\n`;
       for (const delta of chunkReply(header + reply)) {

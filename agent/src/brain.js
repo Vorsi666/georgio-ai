@@ -14,12 +14,14 @@ export function detectMode(raw) { return raw === "ringkas" || raw === "ide" ? ra
 export function extractPrompt(messages) {
   let mode = "tanya";
   const userParts = [];
+  const turns = [];
   for (const m of messages ?? []) {
     if (!m || typeof m.content !== "string") continue;
     if (m.role === "system") { const hit = m.content.match(/mode:(tanya|ringkas|ide)/); if (hit) mode = hit[1]; continue; }
-    if (m.role === "user") userParts.push(m.content.trim());
+    if (m.role === "user") { const c = m.content.trim(); userParts.push(c); turns.push({ role: "user", content: c }); }
+    else if (m.role === "assistant") turns.push({ role: "assistant", content: m.content.trim() });
   }
-  return { mode: detectMode(mode), prompt: userParts.join("\n\n").trim() };
+  return { mode: detectMode(mode), prompt: userParts.join("\n\n").trim(), history: turns };
 }
 
 function sentences(t) {

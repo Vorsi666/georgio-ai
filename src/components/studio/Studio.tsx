@@ -133,6 +133,8 @@ export default function Studio() {
     abortRef.current = ctrl;
     const patch = (content: string) =>
       setThreads((t) => ({ ...t, [mode]: t[mode].map((m) => (m.id === asstId ? { ...m, content } : m)) }));
+    // Free AI can take a few seconds (or retry): show it is thinking, not hung.
+    patch("…");
     let acc = "";
     try {
       const full = await streamAgentReply(base, mode, {
@@ -146,7 +148,9 @@ export default function Studio() {
       // fallback 1: free AI (browser, no key) — jawaban benar-benar nyambung
       try {
         acc = "";
-        const text = await callFreeAIWeb(mode, prompt);
+        // kirim riwayat, bukan cuma pesan terakhir — supaya "kenapa?"/"terus?" nyambung
+        const history = base.map((m) => ({ role: m.role, content: m.content }));
+        const text = await callFreeAIWeb(mode, history);
         if (text && text.length > 20) {
           const full = `${modeLabel(mode)} · Georgio AI\n\n${text}`;
           for (const ch of full.match(/.{1,28}(\s+|$)/g) ?? [full]) {
