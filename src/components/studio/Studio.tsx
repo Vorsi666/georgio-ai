@@ -29,6 +29,10 @@ const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: s
 
 const MODES: AgentMode[] = ["tanya", "ringkas", "ide"];
 
+function modeLabel(mode: AgentMode): string {
+  return MODE_META[mode].label;
+}
+
 function loadThreads(): Record<AgentMode, ChatMessage[]> {
   try {
     const raw = localStorage.getItem("georgio-threads");
@@ -142,10 +146,9 @@ export default function Studio() {
       // fallback 1: free AI (browser, no key) — jawaban benar-benar nyambung
       try {
         acc = "";
-        const labels: Record<AgentMode, string> = { tanya: "Ngobrol", ringkas: "Ringkas", ide: "Ide" };
         const text = await callFreeAIWeb(mode, prompt);
         if (text && text.length > 20) {
-          const full = `${labels[mode]} · Georgio AI\n\n${text}`;
+          const full = `${modeLabel(mode)} · Georgio AI\n\n${text}`;
           for (const ch of full.match(/.{1,28}(\s+|$)/g) ?? [full]) {
             if (ctrl.signal.aborted) break;
             acc += ch; patch(acc);
@@ -200,7 +203,7 @@ export default function Studio() {
           );
         })}
         <p className="hidden pt-2 font-mono text-[0.65rem] leading-relaxed text-sumi/30 lg:block">
-          {live === null ? "menunggu sapaan pertama" : live ? "● terhubung — Georgio live" : "● mode lokal — tetap menemani"}
+          {live === null ? "menunggu sapaan pertama" : live ? "● agent live — Georgio streaming" : "● AI gratis di browser — tetap menemani"}
           <br />riwayat tersimpan di browser ini
         </p>
       </div>
@@ -272,7 +275,7 @@ export default function Studio() {
                 </button>
               )}
             </div>
-            <p className="mt-2 px-1 font-mono text-[0.62rem] text-sumi/30">enter · kirim · shift+enter · baris baru · {live === false || live === null ? "mode lokal" : "live"} · tanpa login</p>
+            <p className="mt-2 px-1 font-mono text-[0.62rem] text-sumi/30">enter · kirim · shift+enter · baris baru · {live === false || live === null ? "AI gratis di browser" : "agent live"} · tanpa login</p>
           </div>
         </div>
       </div>
