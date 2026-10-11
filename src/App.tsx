@@ -8,11 +8,15 @@ import { getSession, signOut } from "./utils/cloudbase";
 import type { SessionUser } from "./utils/cloudbase";
 import { isPageId } from "./lib/pages";
 import type { PageId } from "./lib/pages";
+import type { AgentMode, ChatMessage } from "./lib/agui-client";
+
+const EMPTY_THREADS: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [], ide: [] };
 
 export default function App() {
   const [page, setPage] = useState<PageId>("beranda");
   const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(EMPTY_THREADS);
 
   // Only getSession() counts as proof of login — never the deprecated login state.
   useEffect(() => {
@@ -90,7 +94,9 @@ export default function App() {
       <div className="pl-64 max-lg:pl-0">
         <main className="w-full pt-16 bg-surface min-h-screen">
           <div className="relative w-full flex-1 flex flex-col px-space-md lg:px-space-xl py-space-md gap-space-lg">
-            {page === "beranda" && <LandingPage onNavigate={go} />}
+            {page === "beranda" && (
+              <LandingPage onNavigate={go} threads={threads} onThreadsChange={setThreads} />
+            )}
             {page === "memory-graph" && (
               <MemoryGraphPage signedIn={user !== null} onSignIn={() => setAuthOpen(true)} />
             )}

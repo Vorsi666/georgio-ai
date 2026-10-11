@@ -13,6 +13,8 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** epoch ms — drives the relative timestamps in the sessions list */
+  at?: number;
 }
 
 interface WireMessage {

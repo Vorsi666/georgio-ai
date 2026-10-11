@@ -4,6 +4,7 @@ import type { AgentMode, ChatMessage } from "../../lib/agui-client";
 import { rid, streamAgentReply } from "../../lib/agui-client";
 import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
+import { QuickSuggestions, FeedbackRow } from "./QuickSuggestions";
 
 const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: string; icon: string }> = {
   tanya: {
@@ -110,7 +111,12 @@ function renderRich(text: string, keyPrefix: string) {
   return out;
 }
 
-export default function Studio() {
+export default function Studio({
+  onThreadsChange,
+}: {
+  /** Lift threads up so the landing page can render the real session list. */
+  onThreadsChange?: (t: Record<AgentMode, ChatMessage[]>) => void;
+}) {
   const [mode, setMode] = useState<AgentMode>("tanya");
   const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
   const [input, setInput] = useState("");
@@ -127,7 +133,8 @@ export default function Studio() {
     } catch {
       /* storage full or blocked — chat still works in-memory */
     }
-  }, [threads]);
+    onThreadsChange?.(threads);
+  }, [threads, onThreadsChange]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -340,8 +347,9 @@ export default function Studio() {
               </div>
             </div>
           ) : (
-            messages.map((m) =>
-              m.role === "user" ? (
+            messages.map((m, i) => {
+              const isLastAssistant = m.role === "assistant" && i === messages.length - 1;
+              return m.role === "user" ? (
                 <article key={m.id} className="flex flex-row-reverse items-start gap-space-md max-w-4xl self-end w-full">
                   <div className="max-w-2xl flex flex-col items-end gap-space-xs">
                     <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
@@ -390,16 +398,18 @@ export default function Studio() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  {isLastAssistant && m.content && <FeedbackRow />}
+                </div>
                 </article>
-              ),
-            )
+              );
+            })
           )}
           <div ref={bottomRef} />
         </div>
 
-        {/* Composer */}
-        <div className="px-space-md py-space-md border-t border-surface-container-high">
+        {/* Composer — quick suggestion dock mirrors chat.html's floating dock */}
+        <div className="px-space-md py-space-md border-t border-surface-container-high flex flex-col gap-space-sm">
+          <QuickSuggestions mode={mode} onPick={setInput} />
           <div className="w-full bg-surface-container-lowest rounded-2xl shadow-md p-space-sm flex flex-col gap-space-xs focus-within:ring-2 focus-within:ring-primary/20 transition-all">
             <textarea
               value={input}
