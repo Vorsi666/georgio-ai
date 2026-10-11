@@ -1,45 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --washi: #f7f3ec;
-  --sumi: #1c1c1e;
-}
-
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--washi);
-  color: var(--sumi);
-  text-rendering: optimizeLegibility;
+  background: #f6f9fe;
+  color: #181c20;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-::selection { background: #B54036; color: #F7F3EC; }
+::selection { background: #0048cc; color: #ffffff; }
 
-/* Washi paper texture - very subtle */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.9'/%3E%3C/svg%3E");
+/* Material Symbols variable-font helper (matches the design's usage) */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
 
-/* Thin washi-style scrollbar */
-[role="log"]::-webkit-scrollbar { width: 6px; }
-[role="log"]::-webkit-scrollbar-track { background: transparent; }
-[role="log"]::-webkit-scrollbar-thumb { background: #1C1C1E14; border-radius: 99px; }
-[role="log"]::-webkit-scrollbar-thumb:hover { background: #B5403640; }
-
-/* Vertical text utility for Japanese accent */
-.vertical-jp {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  letter-spacing: 0.35em;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #dfe3e8; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #c3c5d8; }

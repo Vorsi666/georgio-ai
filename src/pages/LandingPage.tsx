@@ -1,228 +1,225 @@
 import Studio from "../components/studio/Studio";
-import { ArrowDown, ArrowUpRight, Leaf, PenLine, Sparkles, Waves } from "lucide-react";
+import type { PageId } from "../lib/pages";
 
 const FEATURES = [
   {
-    no: "一",
+    icon: "stream",
+    label: "STREAM ENGINE",
     title: "Mengalir, bukan menyembur",
-    body: "Jawaban muncul perlahan, kata demi kata. Kamu bisa hentikan kapan saja — seperti menyela teman yang sedang bercerita. Tenang, tidak tergesa.",
-    Icon: Waves,
+    body: "Jawaban muncul perlahan, kata demi kata. Kamu bisa hentikan kapan saja — seperti menyela teman yang sedang bercerita.",
   },
   {
-    no: "二",
-    title: "Satu pikiran, tiga cara",
+    icon: "hub",
+    label: "MODE SWITCHER",
+    title: "Satugallthought, tiga cara",
     body: "Mau ngobrol bebas, minta diringkas, atau cari ide? Cukup ganti mode. Riwayatmu tetap tersimpan, tidak hilang saat pindah.",
-    Icon: Sparkles,
   },
   {
-    no: "三",
-    title: "Tetap ada, bahkan offline",
-    body: "Belum terhubung ke server? Georgio tetap menjawab dengan pikirannya sendiri. Begitu terhubung, ia otomatis beralih ke versi live.",
-    Icon: Leaf,
+    icon: "shield_lock",
+    label: "OWNER SCOPED",
+    title: "Data terisolasi per akun",
+    body: "Memory Graph memakai aturan owner-scoped: satu pengguna tidak pernah bisa membaca data pengguna lain. Tanpa login, chat tetap jalan.",
   },
-];
+] as const;
 
-const STEPS = [
-  { no: "1", title: "Pilih suasana", body: "Ngobrol, ringkas, atau cari ide — sesuai yang kamu butuhkan saat ini." },
-  { no: "2", title: "Tulis apa adanya", body: "Satu kalimat jujur sudah cukup. Tidak perlu sempurna." },
-  { no: "3", title: "Dengarkan jawabannya", body: "Georgio merangkai jawaban dengan tenang, terstruktur, dan mudah dicerna." },
-];
+const AGENTS = [
+  { name: "Georgio Designer", role: "DESIGN EXPERT", acc: "99.1%", icon: "polyline", body: "Spesialisasi sistem desain editorial, penataan layout visual adaptif, dan palet estetika harmonis." },
+  { name: "Georgio Analyst", role: "STRATEGY DECK", acc: "98.7%", icon: "insights", body: "Sintesis tren kompetitor, kalkulasi pasar, dan ekstraksi sinyal dari dokumen terverifikasi." },
+  { name: "Georgio Engineer", role: "SCRIPT ENGINE", acc: "97.9%", icon: "terminal", body: "Refactoring fungsi, testing generator, penulisan skrip, dan setup pipeline otomatis." },
+  { name: "Georgio Archivist", role: "RAG RETRIEVAL", acc: "99.4%", icon: "dataset", body: "Tanya jawab langsung pada kumpulan dokumen internal, repositori kode, dan basis pengetahuan." },
+] as const;
 
-export default function LandingPage() {
+const STATS = [
+  { value: "<12ms", label: "Ultra-low Latency" },
+  { value: "99.4%", label: "Confidence Score" },
+  { value: "128k", label: "Contextual Tokens" },
+  { value: "4", label: "Active Sub-agents" },
+] as const;
+
+interface Props {
+  onNavigate: (p: PageId) => void;
+}
+
+export default function LandingPage({ onNavigate }: Props) {
   return (
-    <>
-      {/* Washi masthead */}
-      <div className="border-b border-sumi/[0.08]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2.5 font-mono text-[0.68rem] tracking-[0.14em] text-sumi/40">
-          <span className="flex items-center gap-2">
-            <span className="hidden sm:inline">Georgio AI</span>
-            <span className="h-3 w-px bg-sumi/15 max-sm:hidden" aria-hidden />
-            <span>静かな思考 · Edisi Pertama</span>
-          </span>
-          <span className="hidden items-center gap-2 sm:flex">
-            <span>一期一会</span>
-            <span className="h-3 w-px bg-sumi/15" aria-hidden />
-            <span>Tanpa login</span>
-          </span>
-          <span className="font-body text-[0.7rem] tracking-widest sm:hidden">ジョルジオ</span>
-        </div>
-      </div>
+    <div className="w-full flex flex-col gap-space-xl">
+      {/* Hero — matches the ambient orbit + editorial headline treatment */}
+      <section className="relative w-full overflow-hidden bg-surface-container-low px-margin py-space-xl rounded-xl">
+        <div className="pointer-events-none absolute -right-24 -top-32 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-primary-fixed/40 via-surface-container/60 to-transparent blur-3xl opacity-80" />
+        <div className="pointer-events-none absolute right-1/4 top-1/2 w-96 h-96 rounded-full bg-secondary-container/30 blur-2xl" />
 
-      {/* Hero — spacious, wabi-sabi */}
-      <header className="relative mx-auto grid max-w-6xl grid-cols-12 gap-8 overflow-hidden px-5 pb-12 pt-10 lg:gap-6 lg:pb-14 lg:pt-16">
-        {/* Left — headline */}
-        <div className="col-span-12 lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sumi/10 bg-kigami/60 px-4 py-1.5 font-body text-xs tracking-wide text-sumi/70">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-akane" />
-            Georgio sedang mendengarkan
-            <span className="hidden font-mono text-[0.7rem] tracking-widest text-sumi/30 sm:inline">· LIVE</span>
-          </div>
+        <div className="relative max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-space-xl items-center justify-between">
+          <div className="w-full lg:w-7/12 flex flex-col items-start space-y-space-md">
+            <div className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-lowest shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+              <span className="font-label-md text-label-md text-primary font-semibold tracking-wide">
+                Multi-Agent Intelligence Engine
+              </span>
+              <span className="text-tertiary font-label-md text-label-md ml-1">*v2.4</span>
+            </div>
 
-          <h1 className="font-display text-[2.7rem] font-semibold leading-[0.95] tracking-tight text-sumi sm:text-5xl lg:text-[4.4rem]">
-            Pikiran
-            <br />
-            <span className="font-light italic text-take">tenang,</span>
-            <br />
-            <span className="relative inline-block">
-              jawaban jernih.
-              <span className="absolute -bottom-1 left-0 h-px w-full bg-akane/50" aria-hidden />
-            </span>
-          </h1>
-
-          {/* Vertical jp accent — desktop only, absolute */}
-          <p className="absolute right-6 top-10 hidden font-display text-sm tracking-[0.45em] text-sumi/10 lg:block" style={{ writingMode: "vertical-rl" }}>
-            ジョルジオ・エーアイ
-          </p>
-
-          <p className="mt-6 max-w-[36rem] font-body text-[1.05rem] leading-relaxed text-sumi/60">
-            Georgio bukan chatbot yang buru-buru. Ia mendengarkan dulu, merenung sebentar, lalu
-            menjawab dengan tenang — seperti ngobrol pelan di pagi yang hening. Coba tanya apa saja,
-            minta diringkas, atau cari ide.
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a
-              href="#studio"
-              className="inline-flex items-center gap-2 rounded-full bg-sumi px-7 py-3 font-body text-sm font-medium text-washi transition-opacity hover:opacity-90"
-            >
-              Mulai ngobrol <ArrowDown className="h-4 w-4" />
-            </a>
-            <a
-              href="#cara"
-              className="inline-flex items-center gap-2 rounded-full border border-sumi/15 bg-transparent px-6 py-3 font-body text-sm font-medium text-sumi/70 transition-colors hover:border-sumi/25 hover:text-sumi"
-            >
-              Lihat caranya
-            </a>
-          </div>
-
-          <dl className="mt-10 flex gap-8 border-t border-sumi/[0.08] pt-6">
-            {[
-              ["3", "cara bicara"],
-              ["Mengalir", "jawaban live"],
-              ["Tanpa", "daftar & login"],
-            ].map(([v, l]) => (
-              <div key={l}>
-                <dd className="font-display text-2xl font-medium text-sumi">{v}</dd>
-                <dd className="font-body text-xs tracking-wide text-sumi/40">{l}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        {/* Right — soft cards, wabi-sabi overlap */}
-        <div className="relative col-span-12 flex flex-col gap-4 lg:col-span-4 lg:col-start-9 lg:pt-6">
-          {/* Enso decoration */}
-          <svg viewBox="0 0 100 100" className="absolute -right-8 -top-6 hidden h-40 w-40 text-sumi/[0.06] lg:block" aria-hidden>
-            <path
-              d="M50 12 A38 38 0 1 1 48 88 A30 30 0 1 0 50 12"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-          </svg>
-
-          <div className="relative rounded-2xl bg-sumi px-6 py-6 text-washi">
-            <p className="font-mono text-[0.65rem] tracking-[0.2em] text-washi/40">CONTOH JAWABAN</p>
-            <p className="mt-3 font-display text-lg font-light leading-snug">
-              “Jawaban yang baik itu seperti teh — diseduh pelan, baru terasa.”
-            </p>
-            <p className="mt-4 border-t border-washi/10 pt-3 font-body text-xs leading-relaxed text-washi/50">
-              Georgio merangkai jawaban dalam bagian-bagian kecil, jadi mudah diikuti. Tidak menggurui, hanya menemani berpikir.
-            </p>
-            <span className="absolute -bottom-2 -right-2 h-6 w-6 rounded-full bg-akane" aria-hidden />
-          </div>
-
-          <div className="relative rounded-2xl border border-sumi/[0.08] bg-kigami/50 px-6 py-5 backdrop-blur">
-            <p className="font-mono text-[0.65rem] tracking-[0.2em] text-sumi/30">CONTOH IDE</p>
-            <p className="mt-2 font-display text-[1.05rem] font-medium leading-snug text-sumi">
-              Satu topik → lima sudut pandang,
+            <h1 className="font-headline-xl text-headline-xl text-on-surface leading-[1.05]">
+              Pikiran tenang,
               <br />
-              <span className="font-light italic text-take">lengkap dengan hook & jadwal posting.</span>
+              <span className="text-primary">jawaban jernih.</span>
+            </h1>
+
+            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-lg leading-relaxed">
+              Georgio Agent merangkai jawaban dari hasil riset, desain, dan rekam-memar. Satu workspace
+              untuk chat, memory, dan otomasi agen.
             </p>
+
+            <div className="flex flex-wrap gap-space-sm pt-space-xs">
+              <button
+                type="button"
+                onClick={() => onNavigate("chat-workspace")}
+                className="inline-flex items-center gap-space-xs px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-[0_4px_16px_rgba(0,72,204,0.2)] hover:bg-primary-container transition-all"
+              >
+                <span className="material-symbols-outlined text-lg leading-none">play_arrow</span>
+                Mulai Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate("memory-graph")}
+                className="inline-flex items-center gap-space-xs px-space-lg py-space-sm rounded-full bg-surface-container-lowest text-on-surface font-label-lg text-label-lg shadow-sm hover:bg-surface-container transition-all"
+              >
+                <span className="material-symbols-outlined text-lg leading-none">hub</span>
+                Buka Memory Graph
+              </button>
+            </div>
+
+            <dl className="mt-space-md flex flex-wrap gap-space-lg">
+              {[
+                ["3", "mode bicara"],
+                ["Live", "streaming agent"],
+                ["Owner", "scoped data"],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <dd className="font-headline-sm text-headline-sm text-on-surface font-semibold">{v}</dd>
+                  <dd className="font-label-sm text-label-sm text-outline">{l}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          <p className="hidden px-2 font-body text-xs leading-relaxed text-sumi/30 lg:block">
-            Tip: tulis apa adanya. “Gimana cara nabung 1 juta pertama?” sudah cukup untuk memulai.
-          </p>
+          {/* Right — spec panel */}
+          <div className="relative w-full lg:w-5/12 flex flex-col gap-space-md">
+            <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-lg">
+              <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
+                <span className="material-symbols-outlined text-base">speed</span>
+                System Performance
+              </div>
+              <div className="grid grid-cols-2 gap-space-md mt-space-md">
+                {STATS.map((s) => (
+                  <div key={s.label} className="flex flex-col gap-0.5">
+                    <span className="font-headline-sm text-headline-sm text-on-surface font-bold">{s.value}</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-primary text-on-primary rounded-2xl p-space-lg shadow-md relative">
+              <p className="font-label-sm text-label-sm text-on-primary/60 tracking-widest">PRINSIP</p>
+              <p className="mt-space-sm font-headline-sm text-headline-sm leading-snug">
+                “Jawaban yang baik itu seperti teh — diseduh pelan, baru terasa.”
+              </p>
+              <p className="mt-space-md border-t border-on-primary/10 pt-space-sm font-body-sm text-body-sm text-on-primary/70 leading-relaxed">
+                Georgio merangkai jawaban dalam bagian-bagian kecil, jadi mudah diikuti. Tidak menggurui,
+                hanya menemani berpikir.
+              </p>
+            </div>
+          </div>
         </div>
-      </header>
+      </section>
 
       <Studio />
 
-      {/* Fitur — warm washi panel */}
-      <section id="fitur" className="border-y border-sumi/[0.06] bg-kigami/30 py-16 lg:py-20">
-        <div className="mx-auto max-w-6xl px-5">
-          <p className="font-mono text-xs tracking-[0.2em] text-akane">なぜ違うのか</p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl font-medium leading-tight text-sumi sm:text-4xl">
-            Bukan chatbot yang berisik.
-            <br />
-            <span className="font-light italic text-take">Ini teman berpikir yang tenang.</span>
-          </h2>
-          <p className="mt-4 max-w-xl font-body text-sm leading-relaxed text-sumi/50">
-            Dibuat dengan filosofi Jepang: ruang kosong itu penting, jawaban tidak perlu berteriak, dan
-            setiap kata punya tempatnya.
-          </p>
+      {/* Features */}
+      <section className="w-full px-margin py-space-xl">
+        <div className="max-w-7xl mx-auto flex flex-col gap-space-lg">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-sm">
+            <div>
+              <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
+                <span>* CORE CAPABILITIES</span>
+                <span>—</span>
+                <span className="text-on-surface-variant font-normal">Apa yang Georgioampu</span>
+              </div>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">Dibangun untuk bekerja, bukan sekadar chats</h2>
+            </div>
+          </div>
 
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-md">
             {FEATURES.map((f) => (
               <article
-                key={f.no}
-                className="rounded-2xl border border-sumi/[0.06] bg-washi p-6 transition-transform hover:-translate-y-1"
+                key={f.label}
+                className="group flex flex-col justify-between bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-display text-2xl font-light text-akane/70">{f.no}</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sumi/[0.04]">
-                    <f.Icon className="h-4 w-4 text-sumi/60" />
-                  </span>
+                <div className="space-y-space-md">
+                  <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-2xl">{f.icon}</span>
+                  </div>
+                  <div>
+                    <div className="font-label-sm text-label-sm text-primary font-semibold mb-1">{f.label}</div>
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface">{f.title}</h3>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">{f.body}</p>
+                  </div>
                 </div>
-                <h3 className="mt-4 font-display text-lg font-medium text-sumi">{f.title}</h3>
-                <p className="mt-2 font-body text-sm leading-relaxed text-sumi/55">{f.body}</p>
+                <div className="pt-space-lg flex items-center justify-between text-primary font-label-md text-label-md">
+                  <span>Selengkapnya</span>
+                  <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Cara pakai — like tea ceremony steps */}
-      <section id="cara" className="mx-auto max-w-6xl px-5 py-16 lg:py-20">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-4">
-            <p className="font-mono text-xs tracking-[0.2em] text-akane">使い方</p>
-            <h2 className="mt-3 font-display text-3xl font-medium leading-tight text-sumi">
-              Sesederhana
-              <br />
-              <span className="font-light italic">menyeduh teh.</span>
-            </h2>
-            <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-sumi/50">
-              Tidak ada form panjang atau pengaturan rumit. Tiga langkah, lalu biarkan Georgio menemanimu berpikir.
-            </p>
-            <a
-              href="#studio"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-sumi px-6 py-3 font-body text-sm font-medium text-washi transition-opacity hover:opacity-90"
-            >
-              <PenLine className="h-4 w-4" /> Coba sekarang <ArrowUpRight className="h-4 w-4" />
-            </a>
+      {/* Agent showcase */}
+      <section className="w-full bg-surface-container-low px-margin py-space-xl rounded-xl">
+        <div className="max-w-7xl mx-auto flex flex-col gap-space-xl">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+            <div>
+              <span className="font-label-sm text-label-sm text-primary font-semibold tracking-wider uppercase">
+                Multi-Specialist Fleet
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">Persona Agen Khusus</h2>
+            </div>
+            <div className="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              4 Agen Standby &amp; Siap Didelegasikan
+            </div>
           </div>
 
-          <ol className="col-span-12 lg:col-span-7 lg:col-start-6">
-            {STEPS.map((s, i) => (
-              <li
-                key={s.no}
-                className={`flex gap-5 border-t border-sumi/[0.06] py-7 ${i === 1 ? "lg:pl-10" : ""} ${i === 2 ? "lg:pl-4" : ""}`}
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-akane font-display text-sm font-medium text-washi">
-                  {s.no}
-                </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+            {AGENTS.map((a) => (
+              <article key={a.name} className="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
-                  <h3 className="font-display text-base font-medium text-sumi">{s.title}</h3>
-                  <p className="mt-1 font-body text-sm leading-relaxed text-sumi/55">{s.body}</p>
+                  <div className="relative w-full h-32 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-5xl text-secondary/40">{a.icon}</span>
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-surface-container-lowest/90 font-label-sm text-label-sm text-primary font-semibold">
+                      {a.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface">{a.name}</h3>
+                    <span className="font-label-sm text-label-sm text-primary font-bold">{a.acc}</span>
+                  </div>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-md leading-relaxed">{a.body}</p>
                 </div>
-              </li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("agent-capabilities")}
+                  className="w-full inline-flex items-center justify-center gap-space-xs rounded-full bg-surface-container-low text-on-surface font-label-md text-label-md py-space-sm hover:bg-primary hover:text-on-primary transition-colors"
+                >
+                  Delegasikan
+                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+              </article>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
