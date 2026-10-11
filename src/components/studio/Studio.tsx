@@ -112,13 +112,37 @@ function renderRich(text: string, keyPrefix: string) {
 }
 
 export default function Studio({
+  threads: controlledThreads,
   onThreadsChange,
+  variant = "embedded",
 }: {
-  /** Lift threads up so the landing page can render the real session list. */
+  /** When provided, threads live in the parent so chat survives navigation. */
+  threads?: Record<AgentMode, ChatMessage[]>;
   onThreadsChange?: (t: Record<AgentMode, ChatMessage[]>) => void;
+  /** Standalone fills the viewport; embedded keeps the compact landing height. */
+  variant?: "standalone" | "embedded";
 }) {
   const [mode, setMode] = useState<AgentMode>("tanya");
-  const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
+  const [localThreads, setLocalThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
+  const controlled = controlledThreads !== undefined;
+  const threads = controlledThreads ?? localThreads;
+  // Both branches are Dispatch<SetStateAction<Threads>>; name the shape so the
+  // union doesn't collapse to `any` at the call sites.
+  type Threads = Record<AgentMode, ChatMessage[]>;
+  const setThreads: (
+    updater: Threads | ((prev: Threads) => Threads),
+  ) => void = controlled
+    ? (updater) => {
+        const next =
+          typeof updater === "function"
+            ? (updater as (prev: Threads) => Threads)(controlledThreads)
+            : updater;
+        onThreadsChange?.(next);
+      }
+    : (updater) =>
+        setLocalThreads((prev) =>
+          typeof updater === "function" ? (updater as (p: Threads) => Threads)(prev) : updater,
+        );
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [live, setLive] = useState<boolean | null>(null);
@@ -126,6 +150,7 @@ export default function Studio({
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const messages = threads[mode];
+  const standalone = variant === "standalone";
 
   useEffect(() => {
     try {
@@ -298,7 +323,11 @@ export default function Studio({
       </div>
 
       {/* Chat canvas */}
-      <section className="w-full bg-surface-container-lowest rounded-xl shadow-sm flex flex-col">
+      <section className={
+            standalone
+              ? "w-full bg-surface-container-lowest rounded-xl shadow-sm flex flex-col h-[calc(100vh-8rem)]"
+              : "w-full bg-surface-container-lowest rounded-xl shadow-sm flex flex-col"
+          }>
         <div className="flex items-center justify-between px-space-md py-space-sm border-b border-surface-container-high">
           <div className="flex items-center gap-space-sm">
             <span className={`h-2 w-2 rounded-full ${running ? "animate-pulse bg-primary" : "bg-primary"}`} />
@@ -313,7 +342,11 @@ export default function Studio({
         </div>
 
         <div
-          className="flex-1 min-h-[320px] max-h-[56vh] overflow-y-auto px-space-md py-space-md flex flex-col gap-space-lg"
+          className={
+            standalone
+              ? "flex-1 min-h-[320px] overflow-y-auto px-space-md py-space-md flex flex-col gap-space-lg"
+              : "flex-1 min-h-[320px] max-h-[72vh] overflow-y-auto px-space-md py-space-md flex flex-col gap-space-lg"
+          }
           role="log"
           aria-live="polite"
         >

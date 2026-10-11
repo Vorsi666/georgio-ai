@@ -4,6 +4,7 @@ import AuthPage from "./pages/AuthPage";
 import MemoryGraphPage from "./pages/MemoryGraphPage";
 import WorkspacePage from "./pages/WorkspacePage";
 import LandingPage from "./pages/LandingPage";
+import ChatWorkspacePage from "./pages/ChatWorkspacePage";
 import { getSession, signOut } from "./utils/cloudbase";
 import type { SessionUser } from "./utils/cloudbase";
 import { isPageId } from "./lib/pages";
@@ -94,8 +95,9 @@ export default function App() {
       <div className="pl-64 max-lg:pl-0">
         <main className="w-full pt-16 bg-surface min-h-screen">
           <div className="relative w-full flex-1 flex flex-col px-space-md lg:px-space-xl py-space-md gap-space-lg">
-            {page === "beranda" && (
-              <LandingPage onNavigate={go} threads={threads} onThreadsChange={setThreads} />
+            {page === "beranda" && <LandingPage onNavigate={go} threads={threads} />}
+            {page === "chat-workspace" && (
+              <ChatWorkspacePage threads={threads} onThreadsChange={setThreads} />
             )}
             {page === "memory-graph" && (
               <MemoryGraphPage signedIn={user !== null} onSignIn={() => setAuthOpen(true)} />
