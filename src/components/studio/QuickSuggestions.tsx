@@ -6,7 +6,7 @@
  */
 import { BentoTrends, ColorPalette, ComponentSandbox, FeedbackRow } from "./RichAnswer";
 
-const SUGGESTIONS: Record<string, { label: string; text: string }[]> = {
+export const SUGGESTIONS: Record<string, { label: string; text: string }[]> = {
   tanya: [
     { label: "Analisis Tren Visual UI 2025", text: "Buat analisis tren visual UI design tahun 2025 dan berikan rekomendasi palet warna modern serta struktur antarmuka untuk produk SaaS." },
     { label: "Audit Keamanan Database", text: "Audit keamanan database saya: apa saja celah yang perlu diperketat agar tidak ada kebocoran data antar pengguna?" },

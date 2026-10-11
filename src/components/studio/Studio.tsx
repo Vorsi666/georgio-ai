@@ -5,18 +5,19 @@ import { rid, streamAgentReply } from "../../lib/agui-client";
 import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
 import { QuickSuggestions, FeedbackRow } from "./QuickSuggestions";
+import { SUGGESTIONS } from "./QuickSuggestions";
 
 const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: string; icon: string }> = {
   tanya: {
     label: "Ngobrol",
     hint: "Tanya apa saja — Georgio menjawab dengan tenang dan terstruktur.",
-    placeholder: "Ketik pesan atau instruksi untuk Georgio Agent…",
+    placeholder: "Tanya Georgio apa saja…",
     icon: "forum",
   },
   ringkas: {
     label: "Ringkas",
     hint: "Tempel tulisan panjang, Georgio ambil intisarinya.",
-    placeholder: "Tempel artikel, catatan, atau tulisan panjang di sini…",
+    placeholder: "Tempel artikel atau tulisan panjang…",
     icon: "content_cut",
   },
   ide: {
@@ -126,8 +127,6 @@ export default function Studio({
   const [localThreads, setLocalThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
   const controlled = controlledThreads !== undefined;
   const threads = controlledThreads ?? localThreads;
-  // Both branches are Dispatch<SetStateAction<Threads>>; name the shape so the
-  // union doesn't collapse to `any` at the call sites.
   type Threads = Record<AgentMode, ChatMessage[]>;
   const setThreads: (
     updater: Threads | ((prev: Threads) => Threads),
@@ -148,9 +147,11 @@ export default function Studio({
   const [live, setLive] = useState<boolean | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   const messages = threads[mode];
   const standalone = variant === "standalone";
+  const isEmpty = messages.length === 0;
 
   useEffect(() => {
     try {
@@ -164,6 +165,14 @@ export default function Studio({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, mode]);
+
+  // Auto-grow composer like Gemini (1 line -> max ~6 lines, then scroll)
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [input]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -240,258 +249,260 @@ export default function Studio({
     setThreads((t) => ({ ...t, [mode]: [] }));
   }, [mode]);
 
-  return (
-    <section className="w-full flex flex-col gap-space-lg">
-      {/* Session sub-header */}
-      <section className="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-wrap items-center justify-between gap-space-md">
-        <div className="flex items-center gap-space-md">
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-primary-fixed/40 text-primary">
-            <span className="material-symbols-outlined text-2xl leading-none">smart_toy</span>
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
-            </span>
+  const statusText =
+    live === null ? "menunggu sapaan pertama" : live ? "agent live — streaming" : "AI gratis di browser";
+
+  const composer = (
+    <div className="w-full">
+      <div className="w-full rounded-[28px] border border-surface-container-high bg-surface-container-lowest shadow-md transition-shadow focus-within:shadow-lg focus-within:border-primary/30">
+        <textarea
+          ref={taRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+          rows={1}
+          placeholder={MODE_META[mode].placeholder}
+          aria-label="Tanya Georgio"
+          className="w-full bg-transparent px-5 pt-4 pb-1 font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none leading-relaxed max-h-40"
+        />
+        <div className="flex items-center justify-between px-3 pb-3 pt-1">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              title="Lampirkan"
+              aria-label="Lampirkan file"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">add</span>
+            </button>
+            <button
+              type="button"
+              title="Deep Reasoning"
+              className="hidden sm:inline-flex items-center gap-1 rounded-full px-3 py-1.5 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container"
+            >
+              <span className="material-symbols-outlined text-lg leading-none">psychology</span>
+              Deep Reasoning
+            </button>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-space-xs">
-              <span className="font-headline-sm text-headline-sm text-on-surface">Georgio Agent v2.4</span>
-              <span className="font-label-sm text-label-sm px-space-xs py-0.5 rounded-full bg-primary text-on-primary font-medium tracking-wider">
-                ULTRA MODE
-              </span>
-            </div>
-            <div className="flex items-center gap-space-xs text-outline font-label-md text-label-md">
-              <span className="w-2 h-2 rounded-full bg-primary" />
-              Online &amp; Siap Membantu
-              <span className="text-outline-variant">•</span>
-              <span className="hidden sm:inline">Kontekstual 128k Tokens</span>
-            </div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              title="Input suara"
+              aria-label="Input suara"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">mic</span>
+            </button>
+            {running ? (
+              <button
+                type="button"
+                onClick={stop}
+                title="Hentikan"
+                aria-label="Hentikan jawaban"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-on-surface text-surface-container-lowest transition-transform hover:scale-105 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-xl leading-none">stop</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void send()}
+                disabled={!input.trim()}
+                title="Kirim"
+                aria-label="Kirim pesan"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-on-primary transition-all hover:bg-primary-container hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
+              >
+                <span className="material-symbols-outlined text-xl leading-none">arrow_upward</span>
+              </button>
+            )}
           </div>
         </div>
+      </div>
+      <p className="mt-2 text-center font-label-sm text-label-sm text-outline">
+        Georgio bisa salah — periksa jawaban penting · {statusText}
+      </p>
+    </div>
+  );
 
-        <div className="flex flex-wrap items-center gap-space-sm">
-          <div className="relative inline-flex items-center bg-surface-container-low hover:bg-surface-container rounded-full px-space-md py-space-xs transition-colors">
-            <span className="material-symbols-outlined text-primary text-base mr-1.5">auto_awesome</span>
-            <span className="font-label-lg text-label-lg text-on-surface">Free AI Fallback</span>
-            <span className="material-symbols-outlined text-outline text-sm ml-1">expand_more</span>
-          </div>
+  return (
+    <section className="mx-auto flex w-full max-w-5xl flex-col gap-2">
+      {/* Gemini-style slim top bar: mode switch + history action */}
+      <div className="flex items-center justify-between gap-2 px-1 py-1">
+        <div
+          role="tablist"
+          aria-label="Mode Georgio"
+          className="inline-flex items-center gap-0.5 rounded-full bg-surface-container-low p-1"
+        >
+          {MODES.map((m) => {
+            const active = mode === m;
+            return (
+              <button
+                key={m}
+                role="tab"
+                aria-selected={active}
+                type="button"
+                onClick={() => !running && setMode(m)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-label-lg text-label-lg transition-all ${
+                  active
+                    ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                <span className={`material-symbols-outlined text-base leading-none ${active ? "text-primary" : ""}`}>
+                  {MODE_META[m].icon}
+                </span>
+                {MODE_META[m].label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-1">
+          <span
+            className={`hidden items-center gap-1.5 rounded-full px-3 py-1 font-label-sm text-label-sm md:inline-flex ${
+              running ? "text-primary" : "text-outline"
+            }`}
+            title={statusText}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${running ? "animate-pulse bg-primary" : "bg-outline-variant"}`} />
+            {live === null ? "Siap" : live ? "Live" : "Gratis"}
+          </span>
           <button
             type="button"
             onClick={clearThread}
             disabled={running || messages.length === 0}
-            className="inline-flex items-center gap-1 px-space-md py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors disabled:opacity-30"
+            title="Chat baru"
+            aria-label="Mulai chat baru"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container disabled:opacity-30"
           >
-            <span className="material-symbols-outlined text-base leading-none">ink_eraser</span>
-            Bersihkan
+            <span className="material-symbols-outlined text-xl leading-none">edit_square</span>
           </button>
         </div>
-      </section>
-
-      {/* Mode rail */}
-      <div className="flex flex-col sm:flex-row gap-space-sm">
-        {MODES.map((m, idx) => {
-          const active = mode === m;
-          const meta = MODE_META[m];
-          return (
-            <button
-              key={m}
-              type="button"
-              onClick={() => !running && setMode(m)}
-              aria-pressed={active}
-              className={`flex flex-1 items-start gap-space-sm rounded-xl p-space-md text-left transition-all ${
-                active
-                  ? "bg-secondary-container text-on-secondary-container shadow-sm"
-                  : "bg-surface-container-lowest text-on-surface hover:bg-surface-container-high"
-              }`}
-            >
-              <span
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  active ? "bg-primary text-on-primary" : "bg-surface-container-high text-secondary"
-                }`}
-              >
-                <span className="material-symbols-outlined text-lg leading-none">{meta.icon}</span>
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-space-xs">
-                  <span className="font-headline-sm text-headline-sm">{meta.label}</span>
-                  <span className="font-label-sm text-label-sm opacity-60">0{idx + 1}</span>
-                </span>
-                <span className="mt-0.5 block font-body-sm text-body-sm opacity-75">{meta.hint}</span>
-              </span>
-            </button>
-          );
-        })}
       </div>
 
-      {/* Chat canvas */}
-      <section className={
-            standalone
-              ? "w-full bg-surface-container-lowest rounded-xl shadow-sm flex flex-col h-[calc(100vh-8rem)]"
-              : "w-full bg-surface-container-lowest rounded-xl shadow-sm flex flex-col"
-          }>
-        <div className="flex items-center justify-between px-space-md py-space-sm border-b border-surface-container-high">
-          <div className="flex items-center gap-space-sm">
-            <span className={`h-2 w-2 rounded-full ${running ? "animate-pulse bg-primary" : "bg-primary"}`} />
-            <span className="font-headline-sm text-headline-sm text-on-surface">{MODE_META[mode].label}</span>
-            <span className="hidden font-label-sm text-label-sm text-outline sm:inline">
-              {MODES.indexOf(mode) + 1} / 3 · {mode}
+      {isEmpty ? (
+        /* ---------- Gemini empty state: centered greeting + hero composer ---------- */
+        <div className="flex flex-col items-center px-2 pb-6 pt-10 sm:pt-16">
+          <h1 className="max-w-2xl text-center font-headline-lg text-headline-lg text-on-surface sm:text-[44px] sm:leading-[52px]">
+            Tulis apa adanya.
+            <br />
+            <span className="bg-gradient-to-r from-primary via-primary-container to-tertiary-container bg-clip-text text-transparent">
+              Georgio yang merapikan.
             </span>
+          </h1>
+          <p className="mt-3 max-w-md text-center font-body-md text-body-md text-on-surface-variant">
+            {MODE_META[mode].hint}
+          </p>
+          <div className="mt-8 w-full max-w-3xl">{composer}</div>
+          <div className="mt-6 grid w-full max-w-3xl grid-cols-1 gap-2 sm:grid-cols-2">
+            {(SUGGESTIONS[mode] ?? SUGGESTIONS.tanya).slice(0, 4).map((s) => (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setInput(s.text)}
+                className="group flex items-center justify-between gap-3 rounded-2xl border border-surface-container-high bg-surface-container-lowest px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-body-md text-body-md text-on-surface">{s.label}</span>
+                  <span className="mt-0.5 line-clamp-1 block font-body-sm text-body-sm text-outline">
+                    {s.text}
+                  </span>
+                </span>
+                <span className="material-symbols-outlined shrink-0 text-lg text-outline transition-colors group-hover:text-primary">
+                  arrow_outward
+                </span>
+              </button>
+            ))}
           </div>
-          <span className="font-label-sm text-label-sm text-outline">
-            {live === null ? "menunggu sapaan pertama" : live ? "● agent live — streaming" : "● AI gratis di browser"}
-          </span>
         </div>
-
+      ) : (
+        /* ---------- Gemini thread: plain AI text, pill user bubble ---------- */
         <div
           className={
             standalone
-              ? "flex-1 min-h-[320px] overflow-y-auto px-space-md py-space-md flex flex-col gap-space-lg"
-              : "flex-1 min-h-[320px] max-h-[72vh] overflow-y-auto px-space-md py-space-md flex flex-col gap-space-lg"
+              ? "flex h-[calc(100vh-11rem)] flex-col overflow-hidden"
+              : "flex flex-col"
           }
-          role="log"
-          aria-live="polite"
         >
-          {messages.length === 0 ? (
-            <div className="flex flex-1 flex-col items-start justify-center gap-space-md">
-              <p className="font-headline-lg text-headline-lg text-on-surface">
-                Tulis apa adanya.
-                <br />
-                <span className="text-primary">Georgio yang merapikan.</span>
-              </p>
-              <p className="max-w-md font-body-md text-body-md text-on-surface-variant">
-                {MODE_META[mode].hint} Pilih salah satu contoh di bawah untuk mengisi.
-              </p>
-              <div className="flex flex-wrap gap-space-xs">
-                {(
-                  mode === "tanya"
-                    ? ["Buat analisis tren visual UI design 2025", "Apa bedanya tabungan dan deposito?"]
-                    : mode === "ringkas"
-                      ? ["Tempel tulisan panjangmu di sini…"]
-                      : ["kedai kopi kecil di gang", "tips hemat anak kos"]
-                ).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setInput(s)}
-                    className="px-space-md py-1 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm transition-all hover:bg-primary hover:text-on-primary"
-                  >
-                    {s.length > 42 ? s.slice(0, 42) + "…" : s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((m, i) => {
-              const isLastAssistant = m.role === "assistant" && i === messages.length - 1;
-              return m.role === "user" ? (
-                <article key={m.id} className="flex flex-row-reverse items-start gap-space-md max-w-4xl self-end w-full">
-                  <div className="max-w-2xl flex flex-col items-end gap-space-xs">
-                    <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-                      <span className="font-semibold text-on-surface">You</span>
-                    </div>
-                    <div className="p-space-lg rounded-2xl rounded-tr-xs bg-primary text-on-primary shadow-md">
-                      <p className="font-body-lg text-body-lg leading-relaxed whitespace-pre-wrap break-words">
-                        {m.content}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ) : (
-                <article key={m.id} className="flex items-start gap-space-md max-w-5xl self-start w-full">
-                  <div className="flex-shrink-0 relative">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-on-primary shadow-md">
-                      <span className="material-symbols-outlined text-xl leading-none">smart_toy</span>
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-sm">
-                      <span className="text-tertiary font-bold text-[11px] leading-none">*</span>
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-space-sm min-w-0">
-                    <div className="flex flex-wrap items-center gap-space-sm font-label-sm text-label-sm text-outline">
-                      <span className="font-semibold text-primary">Georgio Agent</span>
-                      <span className="px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface font-label-md text-label-md">
-                        {MODE_META[mode].label}
-                      </span>
-                    </div>
-                    <div className="w-full bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-lg shadow-sm">
-                      <div className="font-body-lg text-body-lg text-on-surface leading-relaxed">
-                        {m.content ? (
-                          renderRich(m.content, m.id)
-                        ) : (
-                          <span className="inline-flex gap-1 py-1">
-                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-surface-container-highest" />
-                            <span
-                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-surface-container-highest"
-                              style={{ animationDelay: "150ms" }}
-                            />
-                            <span
-                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-surface-container-highest"
-                              style={{ animationDelay: "300ms" }}
-                            />
-                          </span>
-                        )}
+          <div
+            className={
+              standalone
+                ? "min-h-0 flex-1 overflow-y-auto px-2"
+                : "max-h-[62vh] min-h-[320px] overflow-y-auto px-2"
+            }
+            role="log"
+            aria-live="polite"
+          >
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-7 py-6">
+              {messages.map((m, i) => {
+                const isLastAssistant = m.role === "assistant" && i === messages.length - 1;
+                if (m.role === "user") {
+                  return (
+                    <div key={m.id} className="flex justify-end">
+                      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-surface-container px-5 py-3 sm:max-w-[75%]">
+                        <p className="whitespace-pre-wrap break-words font-body-lg text-body-lg leading-relaxed text-on-surface">
+                          {m.content}
+                        </p>
                       </div>
                     </div>
-                  {isLastAssistant && m.content && <FeedbackRow />}
-                </div>
-                </article>
-              );
-            })
-          )}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Composer — quick suggestion dock mirrors chat.html's floating dock */}
-        <div className="px-space-md py-space-md border-t border-surface-container-high flex flex-col gap-space-sm">
-          <QuickSuggestions mode={mode} onPick={setInput} />
-          <div className="w-full bg-surface-container-lowest rounded-2xl shadow-md p-space-sm flex flex-col gap-space-xs focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void send();
+                  );
                 }
-              }}
-              rows={2}
-              placeholder={MODE_META[mode].placeholder}
-              aria-label="Pesan untuk Georgio Agent"
-              className="w-full bg-transparent px-space-sm py-space-xs font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none"
-            />
-            <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-space-xs">
-                <span className="material-symbols-outlined text-lg text-outline">psychology</span>
-                <span className="font-label-sm text-label-sm text-secondary">Deep Reasoning ON</span>
-              </div>
-              {running ? (
-                <button
-                  type="button"
-                  onClick={stop}
-                  className="inline-flex items-center justify-center gap-space-xs rounded-full bg-tertiary-container text-on-tertiary-container font-label-lg text-label-lg px-space-lg py-space-sm shadow-md transition-all"
-                >
-                  <span className="material-symbols-outlined text-lg leading-none">stop_circle</span>
-                  Hentikan
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void send()}
-                  disabled={!input.trim()}
-                  className="inline-flex items-center justify-center gap-space-xs rounded-full bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 disabled:hover:scale-100"
-                >
-                  <span>Kirim</span>
-                  <span className="material-symbols-outlined text-lg leading-none">arrow_upward</span>
-                </button>
-              )}
+                const streaming = isLastAssistant && running && !m.content;
+                const thinking = m.content === "…";
+                return (
+                  <div key={m.id} className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary">
+                        <span className="material-symbols-outlined text-sm leading-none">smart_toy</span>
+                      </span>
+                      <span className="font-label-md text-label-md text-on-surface-variant">
+                        Georgio · {MODE_META[mode].label}
+                      </span>
+                    </div>
+                    <div className="pl-8 font-body-lg text-body-lg leading-[1.75] text-on-surface">
+                      {streaming || thinking || !m.content ? (
+                        <span className="inline-flex items-center gap-1.5 py-2" aria-label="Georgio sedang mengetik">
+                          <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
+                          <span
+                            className="h-2 w-2 animate-bounce rounded-full bg-primary/70"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <span
+                            className="h-2 w-2 animate-bounce rounded-full bg-primary/40"
+                            style={{ animationDelay: "300ms" }}
+                          />
+                        </span>
+                      ) : (
+                        renderRich(m.content, m.id)
+                      )}
+                    </div>
+                    {isLastAssistant && m.content && m.content !== "…" && (
+                      <div className="pl-8 pt-1">
+                        <FeedbackRow />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={bottomRef} />
             </div>
           </div>
-          <div className="flex items-center gap-space-sm mt-space-sm font-label-sm text-label-sm text-outline">
-            <span>* Riwayat lokal di browser ini</span>
-            <span>•</span>
-            <span>{live ? "agent live" : "AI gratis di browser"}</span>
+
+          {/* Sticky Gemini composer */}
+          <div className="sticky bottom-0 bg-gradient-to-t from-surface via-surface to-transparent px-2 pb-2 pt-6">
+            <div className="mx-auto w-full max-w-3xl">
+              <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+                <QuickSuggestions mode={mode} onPick={setInput} />
+              </div>
+              {composer}
+            </div>
           </div>
         </div>
-      </section>
+      )}
     </section>
   );
 }
