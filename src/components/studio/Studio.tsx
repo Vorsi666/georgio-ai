@@ -129,21 +129,31 @@ export default function Studio({
 }) {
   type Threads = Record<AgentMode, ChatMessage[]>;
   const [mode, setMode] = useState<AgentMode>("tanya");
-  const [localThreads, setLocalThreads] = useState<Threads>(loadThreads);
-  const controlled = controlledThreads !== undefined;
-  const threads = controlledThreads ?? localThreads;
+  // Single source of truth di Studio biar kirim langsung render — parent cuma mirror.
+  const [threads, setThreadsInternal] = useState<Threads>(() => controlledThreads ?? loadThreads());
   const threadsRef = useRef<Threads>(threads);
   threadsRef.current = threads;
-  const setThreads: (updater: Threads | ((prev: Threads) => Threads)) => void = controlled
-    ? (updater) => {
-        const cur = threadsRef.current;
-        const next = typeof updater === "function" ? (updater as (p: Threads) => Threads)(cur) : updater;
-        onThreadsChange?.(next);
-      }
-    : (updater) =>
-        setLocalThreads((prev) =>
-          typeof updater === "function" ? (updater as (p: Threads) => Threads)(prev) : updater,
-        );
+  const onThreadsChangeRef = useRef(onThreadsChange);
+  onThreadsChangeRef.current = onThreadsChange;
+  const prevControlledSigRef = useRef<string | null>(controlledThreads ? JSON.stringify(controlledThreads) : null);
+  useEffect(() => {
+    if (controlledThreads === undefined) return;
+    const sig = JSON.stringify(controlledThreads);
+    if (sig !== prevControlledSigRef.current && sig !== JSON.stringify(threadsRef.current)) {
+      prevControlledSigRef.current = sig;
+      setThreadsInternal(controlledThreads);
+    }
+  }, [controlledThreads]);
+  const setThreads: (updater: Threads | ((prev: Threads) => Threads)) => void = useCallback(
+    (updater) => {
+      setThreadsInternal((prev) => {
+        const next = typeof updater === "function" ? (updater as (p: Threads) => Threads)(prev) : updater;
+        queueMicrotask(() => onThreadsChangeRef.current?.(next));
+        return next;
+      });
+    },
+    [],
+  );
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [live, setLive] = useState<boolean | null>(null);
@@ -220,6 +230,7 @@ export default function Studio({
     if ((!prompt && files.length === 0) || running) return;
     setInput("");
     setPending([]);
+    setMediaNotice(null);
     const cur = threadsRef.current;
     const userMsg: ChatMessage = {
       id: rid(),
@@ -231,6 +242,8 @@ export default function Studio({
     const asstId = rid();
     const base = [...cur[mode], userMsg];
     setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
+    // layar harus langsung beralih dari empty ke thread — jangan tunggu stream.
+    requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" }));
     setRunning(true);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -290,9 +303,11 @@ export default function Studio({
       setRunning(false);
       abortRef.current = null;
     }
-  }, [input, pending, running, mode, threads]);
+  }, [input, pending, running, mode]);
 
   const clearThread = useCallback(() => {
+    setMediaNotice(null);
+    setPending([]);
     setThreads((t) => ({ ...t, [mode]: [] }));
   }, [mode]);
 
