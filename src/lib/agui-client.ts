@@ -7,7 +7,7 @@
  * No @ag-ui/client dependency — raw fetch + SSE parsing keeps the bundle lean.
  */
 
-export type AgentMode = "tanya" | "ringkas" | "ide";
+export type AgentMode = "tanya" | "ringkas";
 
 export interface ChatMessage {
   id: string;

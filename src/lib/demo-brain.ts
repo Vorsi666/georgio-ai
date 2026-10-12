@@ -7,17 +7,16 @@ import type { AgentMode } from "./agui-client";
 export const MODES = {
   tanya:  { id: "tanya" as const,  label: "Ngobrol", tagline: "Tanya apa saja — dijawab pelan dan nyambung." },
   ringkas:{ id: "ringkas" as const, label: "Ringkas", tagline: "Tulisan panjang diringkas jadi intisari." },
-  ide:    { id: "ide" as const,    label: "Ide",    tagline: "Satu topik jadi lima sudut pandang." },
 };
 
-export function detectMode(raw: unknown): AgentMode { return raw === "ringkas" || raw === "ide" ? raw : "tanya"; }
+export function detectMode(raw: unknown): AgentMode { return raw === "ringkas" ? raw : "tanya"; }
 
 export function extractPrompt(messages: Array<{ role?: string; content?: string }>): { mode: AgentMode; prompt: string } {
   let mode: AgentMode = "tanya";
   const userParts: string[] = [];
   for (const m of messages ?? []) {
     if (!m || typeof m.content !== "string") continue;
-    if (m.role === "system") { const hit = m.content.match(/mode:(tanya|ringkas|ide)/); if (hit) mode = hit[1] as AgentMode; continue; }
+    if (m.role === "system") { const hit = m.content.match(/mode:(tanya|ringkas)/); if (hit) mode = hit[1] as AgentMode; continue; }
     if (m.role === "user") userParts.push(m.content.trim());
   }
   return { mode: detectMode(mode), prompt: userParts.join("\n\n").trim() };
@@ -192,19 +191,8 @@ function answerRingkas(prompt: string): string {
   const bullets=sents.slice(0,5).map((s,i)=>`${i+1}. ${s}`);
   return [`## Intisari — versi pelan Georgio`,`Tulisanmu sekitar ${words.toLocaleString("id-ID")} kata, membahas **${keys.join(" · ")||"satu gagasan utama"}**. Kalau dibaca pelan, ini poin-poin yang paling penting:`,``, ...bullets, ...(sents.length>5 ? [`…dan ${sents.length-5} kalimat pendukung lainnya.`]:[]), ``, `## Kalau dirangkum satu kalimat`, ``, `${sents[0]??prompt.slice(0,140)}`].join("\n");
 }
-function answerIde(prompt: string): string {
-  if (!prompt) return "Tulis satu topik — misal \"kedai kopi kecil di gang\" — nanti aku ubah jadi lima sudut pandang yang beda, siap pakai.";
-  const topic=prompt.length>70?prompt.slice(0,70).trimEnd()+"…":prompt;
-  const angles=["Sudut edukasi","Cerita personal","Sudut yang bikin penasaran","Panduan pelan","Di balik layar"];
-  const hooks=[`Tiga hal yang sering salah paham soal ${topic} — yang kedua paling sering kejadian.`,`Aku coba hidup dengan ${topic} selama seminggu, ini yang berubah.`,`Kalau kamu serius soal ${topic}, coba hentikan kebiasaan ini dulu.`,`Panduan ${topic} untuk pemula — mulai dari yang paling sederhana.`,`Yang tidak terlihat di kamera soal ${topic} — versi jujurnya.`];
-  const out=[`## Lima sudut pandang untuk \"${topic}\"`,`*Biar satu topik bisa jadi seminggu konten tanpa mengulang.*`,` `];
-  angles.forEach((a,i)=>{ out.push(`### ${i+1}. ${a}`,``, `**Hook:** ${hooks[i]}`, ``, `**Cocok untuk:** ${i%2===0?"video pendek 30–45 detik":"carousel 5 slide + ajak ngobrol di komen"}`,``); });
-  out.push(`## Alur seminggu yang enak diikuti`,`Senin → sudut 1, Rabu → sudut 3, Jumat → sudut 2, Minggu → sudut 5.`);
-  return out.join("\n");
-}
 export function demoReply(mode: AgentMode, prompt: string): string {
   if (mode==="ringkas") return answerRingkas(prompt);
-  if (mode==="ide") return answerIde(prompt);
   return answerTanya(prompt);
 }
 export async function streamDemoReply(mode: AgentMode, prompt: string, onToken: (d:string)=>void, signal?: AbortSignal): Promise<string> {

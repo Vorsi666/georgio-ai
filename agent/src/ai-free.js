@@ -31,9 +31,6 @@ function systemPrompt(mode) {
   if (mode === "ringkas") {
     return `${BASE_PERSONA} Tugas mode INI: ringkas tulisan user. Balas dengan:\n## Intisari\n- 3-5 poin inti (bullet satu kalimat)\n## Satu kalimat\nRingkasan 1 kalimat. Tulis ulang dengan kalimatmu, jangan menyalin kalimat user.`;
   }
-  if (mode === "ide") {
-    return `${BASE_PERSONA} Tugas mode INI: dari 1 topik, buat 5 ide konten siap pakai. Balas dengan:\n## 5 ide untuk: <topik>\n1. **Hook** — 1 kalimat dukungan.\n(hingga 5)\n## Alur seminggu\nUrutan posting 5 hari.`;
-  }
   return `${BASE_PERSONA} Tugas mode INI: jawab pertanyaan user secara nyambung dan konkret. Panjang wajar 120-200 kata, boleh 2-4 poin praktis bila relevan. Kalau pertanyaan user faktual (mis. 'apa itu fotosintesis'), beri penjelasan teknis yang benar dan ringkas, bukan nasihat. Kalau pertanyaan user personal, beri respons empatik + 2-3 langkah praktis.`;
 }
 

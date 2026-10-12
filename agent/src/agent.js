@@ -29,7 +29,7 @@ export class GeorgioAgent extends AbstractAgent {
     emit({ type: EventType.TEXT_MESSAGE_START, messageId, role: "assistant" });
     try {
       const { mode, prompt, history } = extractPrompt(messages);
-      const labels = { tanya: "Ngobrol", ringkas: "Ringkas", ide: "Ide" };
+      const labels = { tanya: "Ngobrol", ringkas: "Ringkas" };
       let reply = "";
       try {
         reply = await callFreeAI(mode, history?.length ? history : [{ role: "user", content: prompt }]);

@@ -1,15 +1,14 @@
 /**
  * Georgio Brain — natural, nyambung, tidak template kaku.
- * 3 mode: tanya (ngobrol) / ringkas / ide. Mirror di src/lib/demo-brain.ts.
+ * 2 mode: tanya (ngobrol) / ringkas. Mirror di src/lib/demo-brain.ts.
  */
 
 export const MODES = {
   tanya:  { id: "tanya",  label: "Ngobrol", tagline: "Tanya apa saja — dijawab pelan dan nyambung." },
   ringkas:{ id: "ringkas", label: "Ringkas", tagline: "Tulisan panjang diringkas jadi intisari." },
-  ide:    { id: "ide",    label: "Ide",    tagline: "Satu topik jadi lima sudut pandang." },
 };
 
-export function detectMode(raw) { return raw === "ringkas" || raw === "ide" ? raw : "tanya"; }
+export function detectMode(raw) { return raw === "ringkas" ? raw : "tanya"; }
 
 export function extractPrompt(messages) {
   let mode = "tanya";
@@ -17,7 +16,7 @@ export function extractPrompt(messages) {
   const turns = [];
   for (const m of messages ?? []) {
     if (!m || typeof m.content !== "string") continue;
-    if (m.role === "system") { const hit = m.content.match(/mode:(tanya|ringkas|ide)/); if (hit) mode = hit[1]; continue; }
+    if (m.role === "system") { const hit = m.content.match(/mode:(tanya|ringkas)/); if (hit) mode = hit[1]; continue; }
     if (m.role === "user") { const c = m.content.trim(); userParts.push(c); turns.push({ role: "user", content: c }); }
     else if (m.role === "assistant") turns.push({ role: "assistant", content: m.content.trim() });
   }
@@ -231,28 +230,8 @@ function answerRingkas(prompt) {
   ].join("\n");
 }
 
-function answerIde(prompt) {
-  if (!prompt) return "Tulis satu topik — misal “kedai kopi kecil di gang” — nanti aku ubah jadi lima sudut pandang yang beda, siap pakai.";
-  const topic=prompt.length>70?prompt.slice(0,70).trimEnd()+"…":prompt;
-  const angles=["Sudut edukasi","Cerita personal","Sudut yang bikin penasaran","Panduan pelan","Di balik layar"];
-  const hooks=[
-    `Tiga hal yang sering salah paham soal ${topic} — yang kedua paling sering kejadian.`,
-    `Aku coba hidup dengan ${topic} selama seminggu, ini yang berubah.`,
-    `Kalau kamu serius soal ${topic}, coba hentikan kebiasaan ini dulu.`,
-    `Panduan ${topic} untuk pemula — mulai dari yang paling sederhana, bukan yang paling mahal.`,
-    `Yang tidak terlihat di kamera soal ${topic} — versi jujurnya.`,
-  ];
-  const out=[`## Lima sudut pandang untuk “${topic}”`,`*Biar satu topik bisa jadi seminggu konten tanpa mengulang.*`,` `];
-  angles.forEach((a,i)=>{
-    out.push(`### ${i+1}. ${a}`,``, `**Hook:** ${hooks[i]}`, ``, `**Cocok untuk:** ${i%2===0?"video pendek 30–45 detik":"carousel 5 slide + ajak ngobrol di komen"}`,``);
-  });
-  out.push(`## Alur seminggu yang enak diikuti`,`Senin → sudut 1, Rabu → sudut 3, Jumat → sudut 2, Minggu → sudut 5. Lihat respons mana yang paling hidup, itu jadi sudut 4.`,`*Tag awal: ${keywords(prompt,3).map(k=>`#${k}`).join(" ")||`#${topic.replace(/\s+/g,"")}`}*`);
-  return out.join("\n");
-}
-
 export function generateReply(mode, prompt) {
   if (mode==="ringkas") return answerRingkas(prompt);
-  if (mode==="ide") return answerIde(prompt);
   return answerTanya(prompt);
 }
 export function chunkReply(text, size=26) {

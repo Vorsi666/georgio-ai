@@ -18,11 +18,6 @@ export const SUGGESTIONS: Record<string, { label: string; text: string }[]> = {
     { label: "Ringkas Meeting Notes", text: "Ringkas meeting notes ini menjadi 3 keputusan utama dan 5 action item." },
     { label: "Ringkas Kode Panjang", text: "Ringkas kode ini dan jelaskan apa yang dilakukan setiap bagian." },
   ],
-  ide: [
-    { label: "Ide Konten 7 Hari", text: "Buat ide konten 7 hari untuk akun yang membahas desain dan teknologi Indonesia." },
-    { label: "Ide Nama Produk", text: "Beri 10 ide nama produk untuk aplikasi AI lokal, dengan alasan singkat tiap nama." },
-    { label: "Ide Side Hustle", text: "Berikan 5 ide side hustle yang bisa dijalankan modal kecil dari rumah." },
-  ],
 };
 
 export function QuickSuggestions({

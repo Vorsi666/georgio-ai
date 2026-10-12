@@ -11,8 +11,8 @@ const FEATURES = [
   {
     icon: "hub",
     label: "MODE SWITCHER",
-    title: "Satuthought, tiga cara",
-    body: "Mau ngobrol bebas, minta diringkas, atau cari ide? Cukup ganti mode. Riwayatmu tetap tersimpan, tidak hilang saat pindah.",
+    title: "Satu alur, dua cara",
+    body: "Mau ngobrol bebas atau minta diringkas? Cukup ganti mode. Riwayatmu tetap tersimpan, tidak hilang saat pindah.",
   },
   {
     icon: "shield_lock",

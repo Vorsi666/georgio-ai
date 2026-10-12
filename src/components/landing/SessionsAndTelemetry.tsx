@@ -18,7 +18,6 @@ export interface SessionSummary {
 const MODE_AGENTS: Record<AgentMode, string> = {
   tanya: "Orchestrator",
   ringkas: "Analyst",
-  ide: "Strategist",
 };
 
 function firstUserLine(messages: ChatMessage[]): string | null {
@@ -60,13 +59,11 @@ export default function SessionsAndTelemetry({
         title,
         agents: MODE_AGENTS[mode],
         when: relativeTime(last?.at ?? 0),
-        icon: mode === "tanya" ? "description" : mode === "ringkas" ? "draw" : "lightbulb",
+        icon: mode === "tanya" ? "description" : "draw",
         iconBg:
           mode === "tanya"
             ? "bg-primary-fixed"
-            : mode === "ringkas"
-              ? "bg-secondary-fixed"
-              : "bg-tertiary-fixed",
+            : "bg-secondary-fixed",
         state: last?.role === "assistant" && last.content ? ("done" as const) : ("active" as const),
       },
     ];

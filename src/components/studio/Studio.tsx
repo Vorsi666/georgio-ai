@@ -4,7 +4,7 @@ import type { AgentMode, ChatMessage } from "../../lib/agui-client";
 import { rid, streamAgentReply } from "../../lib/agui-client";
 import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
-import { QuickSuggestions, FeedbackRow } from "./QuickSuggestions";
+import { FeedbackRow } from "./QuickSuggestions";
 import { SUGGESTIONS } from "./QuickSuggestions";
 
 const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: string; icon: string }> = {
@@ -20,26 +20,25 @@ const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: s
     placeholder: "Tempel artikel atau tulisan panjang…",
     icon: "content_cut",
   },
-  ide: {
-    label: "Ide",
-    hint: "Satu topik jadi lima sudut pandang — siap pakai.",
-    placeholder: "Tulis satu topik… mis. kedai kopi kecil",
-    icon: "lightbulb",
-  },
 };
 
-const MODES: AgentMode[] = ["tanya", "ringkas", "ide"];
+const MODES: AgentMode[] = ["tanya", "ringkas"];
 
 function loadThreads(): Record<AgentMode, ChatMessage[]> {
+  const empty: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [] };
   try {
-    const raw = localStorage.getItem("georgio-threads");
-    if (raw) return JSON.parse(raw) as Record<AgentMode, ChatMessage[]>;
-    const old = localStorage.getItem("ruangtanya-threads");
-    if (old) return JSON.parse(old) as Record<AgentMode, ChatMessage[]>;
+    const raw = localStorage.getItem("georgio-threads") ?? localStorage.getItem("ruangtanya-threads");
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<AgentMode, ChatMessage[]>>;
+      return {
+        tanya: Array.isArray(parsed.tanya) ? parsed.tanya : [],
+        ringkas: Array.isArray(parsed.ringkas) ? parsed.ringkas : [],
+      };
+    }
   } catch {
     /* corrupted storage must never block the studio */
   }
-  return { tanya: [], ringkas: [], ide: [] };
+  return empty;
 }
 
 /** Minimal inline markdown — no HTML injection, text is escaped by React. */
@@ -254,7 +253,7 @@ export default function Studio({
 
   const composer = (
     <div className="w-full">
-      <div className="w-full rounded-[28px] border border-surface-container-high bg-surface-container-lowest shadow-md transition-shadow focus-within:shadow-lg focus-within:border-primary/30">
+      <div className="flex w-full items-end gap-2 rounded-[28px] border border-surface-container-high bg-surface-container-lowest py-2 pl-5 pr-2 shadow-md transition-shadow focus-within:shadow-lg focus-within:border-primary/30">
         <textarea
           ref={taRef}
           value={input}
@@ -268,64 +267,31 @@ export default function Studio({
           rows={1}
           placeholder={MODE_META[mode].placeholder}
           aria-label="Tanya Georgio"
-          className="w-full bg-transparent px-5 pt-4 pb-1 font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none leading-relaxed max-h-40"
+          className="max-h-40 flex-1 bg-transparent py-2.5 font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none leading-relaxed"
         />
-        <div className="flex items-center justify-between px-3 pb-3 pt-1">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              title="Lampirkan"
-              aria-label="Lampirkan file"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
-            >
-              <span className="material-symbols-outlined text-xl leading-none">add</span>
-            </button>
-            <button
-              type="button"
-              title="Deep Reasoning"
-              className="hidden sm:inline-flex items-center gap-1 rounded-full px-3 py-1.5 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container"
-            >
-              <span className="material-symbols-outlined text-lg leading-none">psychology</span>
-              Deep Reasoning
-            </button>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              title="Input suara"
-              aria-label="Input suara"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
-            >
-              <span className="material-symbols-outlined text-xl leading-none">mic</span>
-            </button>
-            {running ? (
-              <button
-                type="button"
-                onClick={stop}
-                title="Hentikan"
-                aria-label="Hentikan jawaban"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-on-surface text-surface-container-lowest transition-transform hover:scale-105 active:scale-95"
-              >
-                <span className="material-symbols-outlined text-xl leading-none">stop</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void send()}
-                disabled={!input.trim()}
-                title="Kirim"
-                aria-label="Kirim pesan"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-on-primary transition-all hover:bg-primary-container hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
-              >
-                <span className="material-symbols-outlined text-xl leading-none">arrow_upward</span>
-              </button>
-            )}
-          </div>
-        </div>
+        {running ? (
+          <button
+            type="button"
+            onClick={stop}
+            title="Hentikan"
+            aria-label="Hentikan jawaban"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-on-surface text-surface-container-lowest transition-transform hover:scale-105 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-xl leading-none">stop</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void send()}
+            disabled={!input.trim()}
+            title="Kirim"
+            aria-label="Kirim pesan"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-all hover:bg-primary-container hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
+          >
+            <span className="material-symbols-outlined text-xl leading-none">arrow_upward</span>
+          </button>
+        )}
       </div>
-      <p className="mt-2 text-center font-label-sm text-label-sm text-outline">
-        Georgio bisa salah — periksa jawaban penting · {statusText}
-      </p>
     </div>
   );
 
@@ -492,12 +458,9 @@ export default function Studio({
             </div>
           </div>
 
-          {/* Sticky Gemini composer */}
-          <div className="sticky bottom-0 bg-gradient-to-t from-surface via-surface to-transparent px-2 pb-2 pt-6">
+          {/* Slim Gemini composer */}
+          <div className="sticky bottom-0 bg-gradient-to-t from-surface via-surface to-transparent px-2 pb-1 pt-4">
             <div className="mx-auto w-full max-w-3xl">
-              <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
-                <QuickSuggestions mode={mode} onPick={setInput} />
-              </div>
               {composer}
             </div>
           </div>

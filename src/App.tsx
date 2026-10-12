@@ -11,7 +11,7 @@ import { isPageId } from "./lib/pages";
 import type { PageId } from "./lib/pages";
 import type { AgentMode, ChatMessage } from "./lib/agui-client";
 
-const EMPTY_THREADS: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [], ide: [] };
+const EMPTY_THREADS: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [] };
 
 export default function App() {
   const [page, setPage] = useState<PageId>("beranda");
