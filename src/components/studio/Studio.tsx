@@ -7,6 +7,7 @@ import { callFreeAIWeb } from "../../lib/ai-free";
 import { filesToAttachments, formatBytes } from "../../lib/media";
 import type { RemotionSettings } from "../../lib/remotion-settings";
 import { FeedbackRow } from "./QuickSuggestions";
+import ChatVideoBlock from "./ChatVideoBlock";
 import { SUGGESTIONS } from "./QuickSuggestions";
 
 const MODE_META: Record<AgentMode, { label: string; hint: string; placeholder: string; icon: string }> = {
@@ -333,23 +334,22 @@ export default function Studio({
     try {
       const { recapPropsFromThreads } = await import("../../lib/remotion-settings");
       const recap = recapPropsFromThreads(base);
-      const comp = remotion.composition === "GeorgioIntro" ? "GeorgioIntro" : "ChatRecap";
-      const label = comp === "GeorgioIntro" ? "Georgio Intro" : "Chat Recap";
+      const compRaw = remotion.composition as string;
+      const comp = compRaw === "GeorgioIntro" ? "GeorgioIntro" : compRaw === "WebsiteReview" ? "WebsiteReview" : "ChatRecap";
+      const label = comp === "GeorgioIntro" ? "Georgio Intro" : comp === "WebsiteReview" ? "Website Review" : "Chat Recap";
       const reply = [
-        `Siap! 🎬 Aku siapkan **${label}** dari obrolan ini — **hanya di GitHub/Vercel** (bukan di DSH).`,
+        `Siap! 🎬 **${label}** langsung muncul di bawah — **hanya di GitHub/Vercel** (bukan di DSH).`,
+        ``,
+        `## Preview video — putar di sini`,
+        `▶️ Tekan play di player bawah (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk).`,
         ``,
         `## Isi videonya`,
         ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
         ``,
-        `## Preview langsung (Vercel)`,
-        `Buka **System Settings** untuk preview Player langsung (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk).`,
-        ``,
-        `## Render MP4 final — hanya di GitHub`,
-        `Buka **GitHub → Actions → Render Remotion Video → Run workflow** → pilih **${comp}** → Run. Hasilnya jadi artifact \`.mp4\` (7 hari).`,
-        ``,
-        `Atau lokal: \`npx remotion render ${comp}\` (butuh Chrome). Di Vercel web tidak render MP4, hanya preview.`,
+        `Mau render MP4 final? **GitHub → Actions → Render Remotion Video → Run workflow → ${comp}** (artifact 7 hari). Di Vercel hanya preview.`,
       ].join("\n");
       for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
+        if ((window as unknown as { __georgioAbort?: boolean }).__georgioAbort) break;
         setThreads((t) => ({
           ...t,
           [mode]: t[mode].map((m) =>
@@ -358,6 +358,24 @@ export default function Studio({
         }));
         await new Promise((r) => setTimeout(r, 12));
       }
+      // suntikkan video Player langsung di bubble asisten — langsung terkirim ke chat
+      setThreads((t) => ({
+        ...t,
+        [mode]: t[mode].map((m) =>
+          m.id === asstId
+            ? {
+                ...m,
+                video: {
+                  composition: comp,
+                  durationSec: remotion.durationSec,
+                  width: remotion.width,
+                  height: remotion.height,
+                  fps: remotion.fps,
+                },
+              }
+            : m,
+        ),
+      }));
       setLive(false);
     } finally {
       setRunning(false);
@@ -666,6 +684,11 @@ export default function Studio({
                         renderRich(m.content, m.id)
                       )}
                     </div>
+                    {m.video && (
+                      <div className="pl-8 pt-3">
+                        <ChatVideoBlock video={m.video} messages={messages} />
+                      </div>
+                    )}
                     {isLastAssistant && m.content && m.content !== "…" && (
                       <div className="pl-8 pt-1">
                         <FeedbackRow />

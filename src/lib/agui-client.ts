@@ -19,6 +19,16 @@ export interface ChatAttachment {
   dataUrl: string;
 }
 
+export interface ChatVideo {
+  composition: string;
+  /** data: URL thumbnail (frame pertama) — lokal, tidak di-upload */
+  thumbDataUrl?: string;
+  durationSec: number;
+  width: number;
+  height: number;
+  fps: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -27,6 +37,8 @@ export interface ChatMessage {
   at?: number;
   /** lampiran foto/video — hanya di pesan user */
   attachments?: ChatAttachment[];
+  /** video Remotion yang langsung terkirim ke chat (embed Player) */
+  video?: ChatVideo;
 }
 
 interface WireMessage {

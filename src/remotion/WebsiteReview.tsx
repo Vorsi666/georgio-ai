@@ -12,7 +12,7 @@ export const REVIEW_DEFAULT_PROPS: ReviewProps = {
   title: "Georgio AI",
   url: "georgio-ai.vercel.app",
   bullets: ["Violet Glass — kaca ungu modern", "Chat Workspace — streaming ala Gemini", "Kirim foto & video · buat video Remotion"],
-  cta: "georgio-ai.vercel.app · #chat",
+  cta: "georgio-ai.vercel.app · #chat · ✨ motion grafic",
 };
 
 const BG: CSSProperties = {
