@@ -336,16 +336,18 @@ export default function Studio({
       const comp = remotion.composition === "GeorgioIntro" ? "GeorgioIntro" : "ChatRecap";
       const label = comp === "GeorgioIntro" ? "Georgio Intro" : "Chat Recap";
       const reply = [
-        `Siap! 🎬 Aku siapkan **${label}** dari obrolan ini.`,
+        `Siap! 🎬 Aku siapkan **${label}** dari obrolan ini — **hanya di GitHub/Vercel** (bukan di DSH).`,
         ``,
         `## Isi videonya`,
         ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
         ``,
-        `Buka **System Settings** untuk preview langsung (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk), lalu render MP4 final dengan:`,
+        `## Preview langsung (Vercel)`,
+        `Buka **System Settings** untuk preview Player langsung (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk).`,
         ``,
-        `\`npx remotion render ${comp}\``,
+        `## Render MP4 final — hanya di GitHub`,
+        `Buka **GitHub → Actions → Render Remotion Video → Run workflow** → pilih **${comp}** → Run. Hasilnya jadi artifact \`.mp4\` (7 hari).`,
         ``,
-        `Mau ubah judul/resolusi/durasi dulu? Atur di System Settings, lalu bilang "buatkan videonya".`,
+        `Atau lokal: \`npx remotion render ${comp}\` (butuh Chrome). Di Vercel web tidak render MP4, hanya preview.`,
       ].join("\n");
       for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
         setThreads((t) => ({

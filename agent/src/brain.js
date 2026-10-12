@@ -173,6 +173,24 @@ function topicAnswer(prompt, keys) {
     ].join("\n");
   }
 
+  if (/(buat|bikin|create|render).*(video|remotion|recap|intro)|video.*(recap|intro|remotion)|buatkan.*video/i.test(prompt)) {
+    const isIntro = /intro/i.test(prompt);
+    const comp = isIntro ? "GeorgioIntro" : "ChatRecap";
+    const hint = isIntro ? "bumper pembuka ungu kaca" : "rekap 4 pesan terakhirmu jadi kartu";
+    return [
+      `Siap! 🎬 Aku siapkan **${comp}** — ${hint}.`,
+      ``,
+      `## Di Vercel (preview langsung)`,
+      `1. Buka **System Settings** → pilih **${comp}** → atur fps/resolusi/durasi → lihat **Preview Player** langsung muter (hanya di GitHub/Vercel).`,
+      `2. Di chat, tombol **Buat video** juga bisa dipakai kalau ada pesan.`,
+      ``,
+      `## Render MP4 final — hanya di GitHub (bukan di DSH)`,
+      `Buka **GitHub → Actions → Render Remotion Video → Run workflow** → pilih ${comp} → Run. Hasilnya jadi \`.mp4\` artifact (hanya di GitHub/Vercel).`,
+      ``,
+      `Mau aku pakai **${comp}** sekarang? Bilang “buatkan video ${isIntro ? "intro" : "recap"}” dan aku arahkan ke preview.`,
+    ].join("\n");
+  }
+
   // ——— fallback UNIVERSAL: wajib jawab semua pertanyaan, bukan template generik ———
   return buildUniversalAnswer(prompt, keys);
 }

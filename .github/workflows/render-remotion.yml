@@ -1,0 +1,50 @@
+name: Render Remotion Video
+
+# Hanya jalan di GitHub (Actions) — bukan di DSH.
+# Trigger: manual (workflow_dispatch) biar kamu pilih komposisi.
+# Output: artifact .mp4 yang bisa di-download.
+
+on:
+  workflow_dispatch:
+    inputs:
+      composition:
+        description: "Komposisi Remotion"
+        required: true
+        default: "ChatRecap"
+        type: choice
+        options:
+          - ChatRecap
+          - GeorgioIntro
+      codec:
+        description: "Codec"
+        required: false
+        default: "h264"
+        type: choice
+        options:
+          - h264
+          - h264-mkv
+          - vp8
+          - vp9
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install deps
+        run: npm ci
+      - name: Install Chrome for Remotion
+        run: npx remotion browser install chrome --legacy
+      - name: Render
+        run: npx remotion render ${{ inputs.composition }} out/${{ inputs.composition }}.mp4 --codec=${{ inputs.codec }}
+      - name: Upload MP4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.composition }}.mp4
+          path: out/${{ inputs.composition }}.mp4
+          retention-days: 7
