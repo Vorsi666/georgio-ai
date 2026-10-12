@@ -5,8 +5,9 @@ import { rid, streamAgentReply } from "../../lib/agui-client";
 import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
 import { filesToAttachments, formatBytes } from "../../lib/media";
-import type { RemotionSettings } from "../../lib/remotion-settings";
+import type { RemotionCompositionId, RemotionSettings } from "../../lib/remotion-settings";
 import { recapPropsFromThreads } from "../../lib/remotion-settings";
+import { canRenderVideoInBrowser, compositionFromPrompt, detectVideoIntent } from "../../lib/video-intent";
 import { FeedbackRow } from "./QuickSuggestions";
 import ChatVideoBlock from "./ChatVideoBlock";
 import { SUGGESTIONS } from "./QuickSuggestions";
@@ -230,6 +231,77 @@ export default function Studio({
     [pending.length],
   );
 
+  /**
+   * Render video Remotion dan suntikkan Player-nya langsung ke bubble asisten.
+   * Dipakai dua jalur: (1) user mengetik "buat video …", (2) tombol "Buat video".
+   */
+  const renderVideoInto = useCallback(
+    async (
+      asstId: string,
+      thread: ChatMessage[],
+      promptText: string,
+      forcedComposition?: RemotionCompositionId,
+    ): Promise<void> => {
+      const settings = remotion;
+      if (!settings?.enabled) return;
+      const recap = recapPropsFromThreads(thread);
+      const comp = forcedComposition ?? compositionFromPrompt(promptText, settings.composition);
+      const label =
+        comp === "GeorgioIntro" ? "Georgio Intro" : comp === "WebsiteReview" ? "Website Review" : "Chat Recap";
+
+      const estimatedBytes = thread.reduce(
+        (sum, m) => sum + (m.attachments ?? []).reduce((s, a) => s + (a.size || 0), 0),
+        0,
+      );
+      const budget = canRenderVideoInBrowser(estimatedBytes);
+      const lines: string[] = [
+        `Siap! 🎬 **${label}** langsung muncul di bawah — jalan di **GitHub / Vercel**.`,
+        ``,
+        `## Isi videonya`,
+        ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
+        ``,
+        `▶️ Tekan play di player bawah — **${settings.width}×${settings.height}**, ${settings.fps} fps, ${settings.durationSec} dtk. Ubah di **System Settings** kapan saja.`,
+      ];
+      if (budget.ok) {
+        lines.push(``, `Mau MP4 final? **GitHub → Actions → Render Remotion Video → Run workflow → ${comp}** (artifact 7 hari).`);
+      } else {
+        lines.push(``, `⚠️ ${budget.reason}`);
+      }
+
+      const reply = lines.join("\n");
+      for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
+        if (abortRef.current?.signal.aborted) break;
+        setThreads((t) => ({
+          ...t,
+          [mode]: t[mode].map((m) =>
+            m.id === asstId
+              ? { ...m, content: (t[mode].find((x) => x.id === asstId)?.content ?? "") + chunk }
+              : m,
+          ),
+        }));
+        await new Promise((r) => setTimeout(r, 12));
+      }
+      setThreads((t) => ({
+        ...t,
+        [mode]: t[mode].map((m) =>
+          m.id === asstId
+            ? {
+                ...m,
+                video: {
+                  composition: comp,
+                  durationSec: settings.durationSec,
+                  width: settings.width,
+                  height: settings.height,
+                  fps: settings.fps,
+                },
+              }
+            : m,
+        ),
+      }));
+    },
+    [mode, remotion, setThreads],
+  );
+
   const send = useCallback(async () => {
     const prompt = input.trim();
     const files = pending;
@@ -258,6 +330,18 @@ export default function Studio({
 
     patch("…");
     let acc = "";
+
+    // Intent video: jangan tanya AI teks — langsung render & suntikkan Player.
+    if (remotion?.enabled && detectVideoIntent(prompt)) {
+      try {
+        await renderVideoInto(asstId, base, prompt);
+        setLive(false);
+        return;
+      } finally {
+        setRunning(false);
+        abortRef.current = null;
+      }
+    }
 
     try {
       // 1) live agent (AG-UI SSE) when VITE_AGENT_URL is configured
@@ -309,7 +393,7 @@ export default function Studio({
       setRunning(false);
       abortRef.current = null;
     }
-  }, [input, pending, running, mode, setThreads]);
+  }, [input, pending, running, mode, setThreads, remotion, renderVideoInto]);
 
   const clearThread = useCallback(() => {
     setMediaNotice(null);
@@ -317,7 +401,7 @@ export default function Studio({
     setThreads((t) => ({ ...t, [mode]: [] }));
   }, [mode, setThreads]);
 
-  /** Minta Georgio membuat video recap dari thread saat ini. */
+  /** Tombol "Buat video" — pakai jalur render yang sama dengan intent video dari teks. */
   const sendVideoRequest = useCallback(async () => {
     if (running || !remotion?.enabled) return;
     const cur = threadsRef.current;
@@ -336,55 +420,15 @@ export default function Studio({
     const base = [...cur[mode], userMsg];
     setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
     setRunning(true);
+    abortRef.current = new AbortController();
     try {
-      const recap = recapPropsFromThreads(base);
-      const compRaw = remotion.composition as string;
-      const comp = compRaw === "GeorgioIntro" ? "GeorgioIntro" : compRaw === "WebsiteReview" ? "WebsiteReview" : "ChatRecap";
-      const label = comp === "GeorgioIntro" ? "Georgio Intro" : comp === "WebsiteReview" ? "Website Review" : "Chat Recap";
-      const reply = [
-        `Siap! 🎬 **${label}** langsung muncul di bawah — **hanya di GitHub/Vercel** (bukan di DSH).`,
-        ``,
-        `## Preview video — putar di sini`,
-        `▶️ Tekan play di player bawah (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk).`,
-        ``,
-        `## Isi videonya`,
-        ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
-        ``,
-        `Mau render MP4 final? **GitHub → Actions → Render Remotion Video → Run workflow → ${comp}** (artifact 7 hari). Di Vercel hanya preview.`,
-      ].join("\n");
-      for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
-        if ((window as unknown as { __georgioAbort?: boolean }).__georgioAbort) break;
-        setThreads((t) => ({
-          ...t,
-          [mode]: t[mode].map((m) =>
-            m.id === asstId ? { ...m, content: (t[mode].find((x) => x.id === asstId)?.content ?? "") + chunk } : m,
-          ),
-        }));
-        await new Promise((r) => setTimeout(r, 12));
-      }
-      // suntikkan video Player langsung di bubble asisten — langsung terkirim ke chat
-      setThreads((t) => ({
-        ...t,
-        [mode]: t[mode].map((m) =>
-          m.id === asstId
-            ? {
-                ...m,
-                video: {
-                  composition: comp,
-                  durationSec: remotion.durationSec,
-                  width: remotion.width,
-                  height: remotion.height,
-                  fps: remotion.fps,
-                },
-              }
-            : m,
-        ),
-      }));
+      await renderVideoInto(asstId, base, "recap");
       setLive(false);
     } finally {
       setRunning(false);
+      abortRef.current = null;
     }
-  }, [running, remotion, mode, setThreads]);
+  }, [running, remotion, mode, setThreads, renderVideoInto]);
 
   const statusText =
     live === null ? "menunggu sapaan pertama" : live ? "agent live — streaming" : "AI gratis di browser";
