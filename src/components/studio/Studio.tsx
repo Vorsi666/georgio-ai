@@ -127,19 +127,17 @@ export default function Studio({
   /** Remotion settings dari System Settings — tombol video muncul kalau enabled. */
   remotion?: RemotionSettings;
 }) {
+  type Threads = Record<AgentMode, ChatMessage[]>;
   const [mode, setMode] = useState<AgentMode>("tanya");
-  const [localThreads, setLocalThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
+  const [localThreads, setLocalThreads] = useState<Threads>(loadThreads);
   const controlled = controlledThreads !== undefined;
   const threads = controlledThreads ?? localThreads;
-  type Threads = Record<AgentMode, ChatMessage[]>;
-  const setThreads: (
-    updater: Threads | ((prev: Threads) => Threads),
-  ) => void = controlled
+  const threadsRef = useRef<Threads>(threads);
+  threadsRef.current = threads;
+  const setThreads: (updater: Threads | ((prev: Threads) => Threads)) => void = controlled
     ? (updater) => {
-        const next =
-          typeof updater === "function"
-            ? (updater as (prev: Threads) => Threads)(controlledThreads)
-            : updater;
+        const cur = threadsRef.current;
+        const next = typeof updater === "function" ? (updater as (p: Threads) => Threads)(cur) : updater;
         onThreadsChange?.(next);
       }
     : (updater) =>
@@ -160,22 +158,32 @@ export default function Studio({
   const standalone = variant === "standalone";
   const isEmpty = messages.length === 0;
 
-  const threadsRef = useRef(threads);
-  threadsRef.current = threads;
-
   useEffect(() => {
+    const toSave = (() => {
+      try {
+        return JSON.stringify(threads);
+      } catch {
+        return null;
+      }
+    })();
+    if (toSave === null) return;
     try {
-      localStorage.setItem("georgio-threads", JSON.stringify(threads));
+      localStorage.setItem("georgio-threads", toSave);
     } catch {
-      /* storage full or blocked — chat still works in-memory */
+      try {
+        const sanitized: Threads = {
+          tanya: threads.tanya.map((m) =>
+            m.attachments ? { ...m, attachments: m.attachments.map((a) => ({ ...a, dataUrl: "" })) } : m,
+          ),
+          ringkas: threads.ringkas.map((m) =>
+            m.attachments ? { ...m, attachments: m.attachments.map((a) => ({ ...a, dataUrl: "" })) } : m,
+          ),
+        } as Threads;
+        localStorage.setItem("georgio-threads", JSON.stringify(sanitized));
+      } catch {
+        /* storage penuh — chat tetap jalan di memori */
+      }
     }
-  }, [threads]);
-
-  // Keep the parent mirror in sync without feeding updates back into the loop.
-  const onThreadsChangeRef = useRef(onThreadsChange);
-  onThreadsChangeRef.current = onThreadsChange;
-  useEffect(() => {
-    onThreadsChangeRef.current?.(threads);
   }, [threads]);
 
   useEffect(() => {

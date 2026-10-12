@@ -16,11 +16,28 @@ import { loadRemotionSettings } from "./lib/remotion-settings";
 
 const EMPTY_THREADS: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [] };
 
+function loadPersistedThreads(): Record<AgentMode, ChatMessage[]> {
+  try {
+    const raw = localStorage.getItem("georgio-threads") ?? localStorage.getItem("ruangtanya-threads");
+    if (!raw) return EMPTY_THREADS;
+    const p = JSON.parse(raw) as Partial<Record<AgentMode, ChatMessage[]>>;
+    return {
+      tanya: Array.isArray(p.tanya) ? p.tanya : [],
+      ringkas: Array.isArray(p.ringkas) ? p.ringkas : [],
+    };
+  } catch {
+    return EMPTY_THREADS;
+  }
+}
+
 export default function App() {
   const [page, setPage] = useState<PageId>("beranda");
   const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
-  const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(EMPTY_THREADS);
+  const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(() => {
+    if (typeof window === "undefined") return EMPTY_THREADS;
+    return loadPersistedThreads();
+  });
   const [remotion, setRemotion] = useState<RemotionSettings>(loadRemotionSettings);
 
   // Only getSession() counts as proof of login — never the deprecated login state.
