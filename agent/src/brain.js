@@ -40,6 +40,25 @@ const low=t=>t.toLowerCase();
 
 // ——— KNOWLEDGE ROUTER: jawaban yang benar-benar nyambung ———
 function topicAnswer(prompt, keys) {
+  // VIDEO INTENT HARUS PALING ATAS — jangan sampai kesasar ke router website/teknologi
+  if (/(buat|bikin|create|render|buatkan|tolong).*(video|remotion|riview|review|recap|intro)|video.*(riview|review|recap|intro|remotion|motion|website|georgio)|motion.*(grafic|graphic|minimalis|modern|smooth)/i.test(prompt)) {
+    const isIntro = /intro/i.test(prompt);
+    const isReview = /(riview|review|website|georgio)/i.test(prompt);
+    const comp = isReview ? "WebsiteReview" : isIntro ? "GeorgioIntro" : "ChatRecap";
+    const hint = isReview ? "review website georgio-ai.vercel.app — motion grafic minimalis modern smooth" : isIntro ? "bumper pembuka ungu kaca" : "rekap 4 pesan terakhirmu jadi kartu";
+    return [
+      `Siap! 🎬 Aku siapkan **${comp}** — ${hint}.`,
+      ``,
+      `## Langkah di Vercel (preview langsung)`,
+      `1. Buka **System Settings** → pilih **${comp}** → atur fps / resolusi / durasi → lihat **Preview Player** langsung muter.`,
+      `2. Di chat, tombol **Buat video** juga bisa dipakai kalau ada pesan.`,
+      ``,
+      `## Render MP4 final — hanya di GitHub (bukan di DSH)`,
+      `Buka **GitHub → Actions → Render Remotion Video → Run workflow** → pilih ${comp} → Run. Hasilnya jadi file \`.mp4\` sebagai artifact (hanya di GitHub/Vercel).`,
+      ``,
+      `Mau aku pakai **${comp}** sekarang? Bilang “buatkan video ${isReview ? "review" : isIntro ? "intro" : "recap"}” dan aku arahkan ke preview.`,
+    ].join("\n");
+  }
   const p = low(prompt);
   const q = prompt.length>180 ? prompt.slice(0,180).trimEnd()+"…" : prompt;
 
@@ -170,24 +189,6 @@ function topicAnswer(prompt, keys) {
       `3. **Lihat aksinya, bukan katanya** — apakah dia juga usaha meluangkan waktu? Itu sinyal paling jujur.`,
       ``,
       `Kalau mau, cerita sedikit konteksnya — sudah kenal berapa lama, situasinya gimana — nanti aku temani mikir pelan-pelan, tanpa nge-judge.`,
-    ].join("\n");
-  }
-
-  if (/(buat|bikin|create|render).*(video|remotion|recap|intro)|video.*(recap|intro|remotion)|buatkan.*video/i.test(prompt)) {
-    const isIntro = /intro/i.test(prompt);
-    const comp = isIntro ? "GeorgioIntro" : "ChatRecap";
-    const hint = isIntro ? "bumper pembuka ungu kaca" : "rekap 4 pesan terakhirmu jadi kartu";
-    return [
-      `Siap! 🎬 Aku siapkan **${comp}** — ${hint}.`,
-      ``,
-      `## Di Vercel (preview langsung)`,
-      `1. Buka **System Settings** → pilih **${comp}** → atur fps/resolusi/durasi → lihat **Preview Player** langsung muter (hanya di GitHub/Vercel).`,
-      `2. Di chat, tombol **Buat video** juga bisa dipakai kalau ada pesan.`,
-      ``,
-      `## Render MP4 final — hanya di GitHub (bukan di DSH)`,
-      `Buka **GitHub → Actions → Render Remotion Video → Run workflow** → pilih ${comp} → Run. Hasilnya jadi \`.mp4\` artifact (hanya di GitHub/Vercel).`,
-      ``,
-      `Mau aku pakai **${comp}** sekarang? Bilang “buatkan video ${isIntro ? "intro" : "recap"}” dan aku arahkan ke preview.`,
     ].join("\n");
   }
 

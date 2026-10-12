@@ -1,6 +1,6 @@
 import type { ChatMessage } from "./agui-client";
 
-export type RemotionCompositionId = "GeorgioIntro" | "ChatRecap";
+export type RemotionCompositionId = "GeorgioIntro" | "ChatRecap" | "WebsiteReview";
 
 export interface RemotionSettings {
   enabled: boolean;
@@ -42,7 +42,8 @@ export function loadRemotionSettings(): RemotionSettings {
     const p = JSON.parse(raw) as Partial<RemotionSettings>;
     return {
       enabled: p.enabled !== false,
-      composition: p.composition === "GeorgioIntro" ? "GeorgioIntro" : "ChatRecap",
+      composition:
+        p.composition === "GeorgioIntro" || p.composition === "WebsiteReview" ? p.composition : "ChatRecap",
       fps: FPS_OPTIONS.includes(p.fps as number) ? (p.fps as number) : REMOTION_DEFAULTS.fps,
       width: clampInt(p.width, 480, 3840, REMOTION_DEFAULTS.width),
       height: clampInt(p.height, 480, 2160, REMOTION_DEFAULTS.height),

@@ -15,6 +15,7 @@ on:
         options:
           - ChatRecap
           - GeorgioIntro
+          - WebsiteReview
       codec:
         description: "Codec"
         required: false

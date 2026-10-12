@@ -2,12 +2,14 @@ import { Suspense, useMemo, useState, lazy } from "react";
 import { Player } from "@remotion/player";
 import { ChatRecap, RECAP_DEFAULT_PROPS } from "./ChatRecap";
 import { GeorgioIntro, INTRO_DEFAULT_PROPS } from "./GeorgioIntro";
+import { REVIEW_DEFAULT_PROPS, WebsiteReview } from "./WebsiteReview";
 import type { RemotionCompositionId } from "../lib/remotion-settings";
 import { framesFromSettings, recapPropsFromThreads } from "../lib/remotion-settings";
 import type { ChatMessage } from "../lib/agui-client";
 
 export type { ChatRecapProps } from "./ChatRecap";
 export type { IntroProps } from "./GeorgioIntro";
+export type { ReviewProps } from "./WebsiteReview";
 
 export interface PreviewProps {
   composition: RemotionCompositionId;
@@ -23,6 +25,7 @@ export interface PreviewProps {
 export const COMPOSITION_META: Record<RemotionCompositionId, { label: string; hint: string }> = {
   ChatRecap: { label: "Chat Recap", hint: "4 pesan terakhirmu jadi kartu video." },
   GeorgioIntro: { label: "Georgio Intro", hint: "Bumper pembuka ungu kaca." },
+  WebsiteReview: { label: "Website Review", hint: "Review georgio-ai.vercel.app — minimalis modern smooth." },
 };
 
 function PreviewInner({ composition, fps, width, height, durationSec, messages, overrideTitle, overrideSubtitle }: PreviewProps) {
@@ -34,17 +37,26 @@ function PreviewInner({ composition, fps, width, height, durationSec, messages, 
       const recap = recapPropsFromThreads(messages ?? []);
       return { title: overrideTitle?.trim() || recap.title, lines: recap.lines };
     }
+    if (composition === "WebsiteReview") {
+      return {
+        title: overrideTitle?.trim() || REVIEW_DEFAULT_PROPS.title,
+        url: REVIEW_DEFAULT_PROPS.url,
+        bullets: REVIEW_DEFAULT_PROPS.bullets,
+        cta: REVIEW_DEFAULT_PROPS.cta,
+      };
+    }
     return {
       title: overrideTitle?.trim() || INTRO_DEFAULT_PROPS.title,
       subtitle: overrideSubtitle?.trim() || INTRO_DEFAULT_PROPS.subtitle,
     };
   }, [composition, messages, overrideTitle, overrideSubtitle]);
 
+  const Comp = composition === "ChatRecap" ? ChatRecap : composition === "WebsiteReview" ? WebsiteReview : GeorgioIntro;
   return (
     <Player
       key={`${composition}-${errKey}-${width}x${height}`}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      component={(composition === "ChatRecap" ? ChatRecap : GeorgioIntro) as any}
+      component={Comp as any}
       inputProps={inputProps}
       durationInFrames={durationInFrames}
       fps={fps}
@@ -89,4 +101,4 @@ export default function RemotionPreview(props: PreviewProps) {
   );
 }
 
-export { RECAP_DEFAULT_PROPS, INTRO_DEFAULT_PROPS };
+export { RECAP_DEFAULT_PROPS, INTRO_DEFAULT_PROPS, REVIEW_DEFAULT_PROPS };

@@ -12,7 +12,8 @@
     "remotion": "remotion studio",
     "remotion:render": "remotion render",
     "remotion:render:intro": "remotion render GeorgioIntro",
-    "remotion:render:recap": "remotion render ChatRecap"
+    "remotion:render:recap": "remotion render ChatRecap",
+    "remotion:render:review": "remotion render WebsiteReview"
   },
   "dependencies": {
     "@cloudbase/js-sdk": "3.4.7",
