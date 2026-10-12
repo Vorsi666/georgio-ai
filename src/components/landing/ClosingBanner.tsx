@@ -1,22 +1,22 @@
 /**
- * Editorial closing banner + footer — ported from
- * `desain Georgio agent/Halaman.html`.
+ * Closing banner + footer — ungu pekat ke muda ala referensi,
+ * headline putih ekstra-tebal.
  */
 import type { PageId } from "../../lib/pages";
 
 export function ClosingBanner({ onNavigate }: { onNavigate: (p: PageId) => void }) {
   return (
-    <section className="w-full bg-gradient-to-r from-primary via-primary-container to-surface-tint py-space-xl px-margin text-on-primary relative overflow-hidden rounded-2xl">
-      <div className="pointer-events-none absolute -left-12 -bottom-16 text-white/10 select-none font-bold text-[220px] leading-none">
-        *
-      </div>
+    <section className="relative w-full overflow-hidden py-space-xl px-margin text-white rounded-[28px] bg-gradient-to-br from-[#2e1065] via-[#7c3aed] to-[#c4b5fd] shadow-lg">
+      <div className="violet-grid pointer-events-none absolute inset-0 opacity-40 [mask-image:none] [&]:bg-[length:36px_36px]" />
+      <div className="pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-white/15 blur-3xl" />
+      <div className="pointer-events-none absolute -left-16 -bottom-24 h-72 w-72 rounded-full bg-fuchsia-300/30 blur-3xl" />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-space-lg relative z-10">
         <div className="max-w-xl space-y-space-xs">
-          <div className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">
-            * Siap Melangkah Lebih Jauh :)
+          <div className="font-label-md text-label-md uppercase tracking-[0.22em] text-white/70 font-semibold">
+            Siap melangkah lebih jauh
           </div>
-          <h3 className="font-headline-lg text-headline-lg text-white font-extrabold leading-tight">
-            Tingkatkan Produktivitas Tim Anda dengan Ekosistem Georgio Agent.
+          <h3 className="display-tight font-headline-lg text-headline-lg font-extrabold leading-tight">
+            Tingkatkan produktivitas tim dengan Georgio.
           </h3>
           <p className="font-body-md text-body-md text-white/80">
             Mulai dalam hitungan detik. Tanpa konfigurasi server yang rumit. Hubungkan data internal Anda
@@ -27,11 +27,15 @@ export function ClosingBanner({ onNavigate }: { onNavigate: (p: PageId) => void 
           <button
             type="button"
             onClick={() => onNavigate("chat-workspace")}
-            className="px-space-xl py-3.5 rounded-full bg-surface-container-lowest text-primary font-label-lg text-label-lg shadow-lg hover:bg-surface-container transition-all transform hover:scale-105"
+            className="rounded-full bg-white px-space-xl py-3.5 font-label-lg text-label-lg text-[#5b21b6] shadow-lg hover:scale-105 transition-transform"
           >
             Coba Sekarang Gratis
           </button>
         </div>
+      </div>
+      <div className="relative z-10 mx-auto mt-8 flex max-w-7xl items-center justify-between font-label-sm text-label-sm text-white/70">
+        <span className="uppercase tracking-wider">Design Resources</span>
+        <span>2025 July</span>
       </div>
     </section>
   );
@@ -39,7 +43,7 @@ export function ClosingBanner({ onNavigate }: { onNavigate: (p: PageId) => void 
 
 export function LandingFooter() {
   return (
-    <footer className="w-full bg-surface-container-low shadow-[0_-1px_8px_rgba(0,0,0,0.02)]">
+    <footer className="w-full">
       <div className="w-full px-margin py-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md">
         <div className="flex items-center gap-space-sm">
           <span className="font-label-md text-label-md text-on-surface-variant">

@@ -22,18 +22,18 @@ export default function WorkspacePage({
 }) {
   const iconWrap =
     accent === "tertiary"
-      ? "bg-tertiary-fixed text-tertiary"
+      ? "bg-tertiary-container/40 text-tertiary"
       : accent === "secondary"
-        ? "bg-secondary-fixed text-primary"
-        : "bg-primary-fixed text-primary";
+        ? "bg-primary/10 text-primary"
+        : "bg-gradient-to-tr from-primary to-tertiary-container text-white";
   const labelColor =
     accent === "tertiary" ? "text-tertiary" : accent === "secondary" ? "text-secondary" : "text-primary";
 
   return (
     <div className="w-full flex flex-col gap-space-lg">
-      <section className="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-wrap items-center justify-between gap-space-md">
+      <section className="glass w-full rounded-[24px] p-space-md shadow-sm flex flex-wrap items-center justify-between gap-space-md">
         <div className="flex items-center gap-space-md">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconWrap}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md ${iconWrap}`}>
             <span className="material-symbols-outlined text-2xl leading-none">{icon}</span>
           </div>
           <div className="flex flex-col">
@@ -51,7 +51,7 @@ export default function WorkspacePage({
         </div>
       </section>
 
-      <section className="w-full bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col items-start gap-space-md">
+      <section className="glass w-full rounded-[24px] p-space-xl shadow-sm flex flex-col items-start gap-space-md">
         <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
           <span>* {id.toUpperCase().replace(/-/g, " ")}</span>
           <span>—</span>

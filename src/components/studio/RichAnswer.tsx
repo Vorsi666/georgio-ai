@@ -176,7 +176,7 @@ export function FeedbackRow() {
         <button
           key={a.label}
           type="button"
-          className="inline-flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-label-sm text-label-sm shadow-sm transition-colors hover:bg-primary hover:text-on-primary"
+          className="glass inline-flex items-center gap-space-xs px-space-sm py-0.5 rounded-full text-on-surface font-label-sm text-label-sm shadow-sm transition-colors hover:bg-primary hover:text-white"
         >
           <span className="material-symbols-outlined text-sm">{a.icon}</span>
           {a.label}

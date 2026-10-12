@@ -35,7 +35,7 @@ export function QuickSuggestions({
           key={s.label}
           type="button"
           onClick={() => onPick(s.text)}
-          className="flex-shrink-0 px-space-md py-1 rounded-full bg-surface-container-lowest hover:bg-primary hover:text-on-primary text-on-surface font-label-md text-label-md shadow-sm transition-all"
+          className="glass flex-shrink-0 px-space-md py-1 rounded-full hover:bg-primary hover:text-white text-on-surface font-label-md text-label-md shadow-sm transition-all"
         >
           {s.label}
         </button>

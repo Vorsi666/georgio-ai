@@ -62,25 +62,26 @@ export default function AuthPage({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-screen bg-surface font-body-md text-body-md text-on-surface">
-      <div className="relative w-full min-h-screen overflow-hidden">
-        {/* Same ambient vinyl-orbit treatment as the landing design */}
-        <div className="pointer-events-none absolute -right-24 -top-32 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-primary-fixed/40 via-surface-container/60 to-transparent blur-3xl opacity-80" />
-        <div className="pointer-events-none absolute right-1/4 top-1/2 w-96 h-96 rounded-full bg-secondary-container/30 blur-2xl" />
+      <div className="relative w-full min-h-screen overflow-hidden violet-wash">
+        {/* Ambient ungu kaca */}
+        <div className="violet-grid pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute -right-24 -top-32 w-[680px] h-[680px] rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute right-1/4 top-1/2 w-96 h-96 rounded-full bg-tertiary-container/25 blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-margin py-space-xl min-h-screen flex items-center">
           <div className="grid grid-cols-12 gap-space-xl w-full items-center">
             {/* Editorial left column */}
             <div className="col-span-12 lg:col-span-5 flex flex-col items-start gap-space-md">
-              <div className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-lowest shadow-sm">
+              <div className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full glass shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
                 <span className="font-label-md text-label-md text-primary font-semibold tracking-wide">
                   Secure Identity Gateway
                 </span>
               </div>
-              <h1 className="font-headline-xl text-headline-xl text-on-surface">
+              <h1 className="display-tight font-headline-xl text-headline-xl text-on-surface">
                 Masuk ke
                 <br />
-                <span className="text-primary">Georgio Agent</span>*
+                <span className="text-primary">Georgio✦</span>
               </h1>
               <p className="font-body-lg text-body-lg text-on-surface-variant max-w-md leading-relaxed">
                 Satu akun untuk seluruh workspace: chat, memory graph, dan prompt studio.
@@ -108,10 +109,10 @@ export default function AuthPage({ onBack }: { onBack: () => void }) {
 
             {/* Auth card */}
             <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-              <div className="bg-surface-container-lowest rounded-2xl shadow-lg p-space-xl flex flex-col gap-space-lg">
+              <div className="glass rounded-[28px] shadow-xl p-space-xl flex flex-col gap-space-lg">
                 <div className="flex items-center justify-between gap-space-md">
                   <div className="flex items-center gap-space-sm">
-                    <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-tertiary-container flex items-center justify-center text-white">
                       <span className="material-symbols-outlined text-xl leading-none">lock</span>
                     </div>
                     <div className="flex flex-col">
@@ -210,7 +211,7 @@ export default function AuthPage({ onBack }: { onBack: () => void }) {
                   <button
                     type="submit"
                     disabled={busy || !hasCloudBase}
-                    className="inline-flex items-center justify-center gap-space-xs rounded-full bg-primary text-on-primary font-label-lg text-label-lg py-space-sm shadow-md hover:bg-primary-container transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-space-xs rounded-full bg-on-surface text-white font-label-lg text-label-lg py-space-sm shadow-md hover:bg-primary transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {busy ? (
                       <>

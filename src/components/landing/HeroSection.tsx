@@ -1,29 +1,30 @@
 import type { PageId } from "../../lib/pages";
 
 /**
- * Hero section — ported from `desain Georgio agent/Halaman.html`
- * ("Top Ambient Canvas & Hero Banner" + "Left Column").
+ * Hero — Violet Glass: label kecil abu-abu, headline hitam ekstra-tebal
+ * dengan aksen ungu, panel kaca di atas gradasi ungu.
  */
 export default function HeroSection({ onNavigate }: { onNavigate: (p: PageId) => void }) {
   return (
-    <section className="relative w-full overflow-hidden bg-surface-container-low px-margin py-space-xl rounded-xl">
-      <div className="pointer-events-none absolute -right-24 -top-32 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-primary-fixed/40 via-surface-container/60 to-transparent blur-3xl opacity-80" />
-      <div className="pointer-events-none absolute right-1/4 top-1/2 w-96 h-96 rounded-full bg-secondary-container/30 blur-2xl" />
+    <section className="violet-wash relative w-full overflow-hidden px-margin py-space-xl rounded-[28px] border border-white/60 shadow-lg">
+      <div className="violet-grid pointer-events-none absolute inset-0" />
+      <div className="pointer-events-none absolute -left-20 top-1/3 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 -top-20 h-80 w-80 rounded-full bg-tertiary-container/30 blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-space-xl items-center justify-between">
         <div className="w-full lg:w-7/12 flex flex-col items-start space-y-space-md">
-          <div className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-lowest shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-            <span className="font-label-md text-label-md text-primary font-semibold tracking-wide">
-              ✨ Multi-Agent Intelligence Engine 2024–2025
-            </span>
-            <span className="text-tertiary font-label-md text-label-md ml-1">*v2.4</span>
-          </div>
+          <span className="font-label-md text-label-md uppercase tracking-[0.22em] text-on-surface-variant/70">
+            Design Resources
+          </span>
 
-          <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight max-w-2xl">
-            Asisten AI Cerdas yang <span className="text-primary italic">Berpikir</span>, Merancang, dan
-            Menuntaskan Pekerjaan Anda.
+          <h1 className="display-tight font-headline-xl text-headline-xl text-on-surface max-w-2xl">
+            Asisten AI Cerdas
+            <br />
+            yang <span className="text-primary">Berpikir✦</span>
           </h1>
+          <p className="font-label-lg text-label-lg uppercase tracking-[0.18em] text-primary">
+            Follow for more
+          </p>
 
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl leading-relaxed">
             Orkestrasi multi-agen otonom untuk sintesis riset mendalam, penulisan kode instan, arsitektur
@@ -34,7 +35,7 @@ export default function HeroSection({ onNavigate }: { onNavigate: (p: PageId) =>
             <button
               type="button"
               onClick={() => onNavigate("chat-workspace")}
-              className="inline-flex items-center gap-space-sm px-space-lg py-3 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md hover:bg-primary-container hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-space-sm px-space-lg py-3 rounded-full bg-on-surface text-surface-container-lowest font-label-lg text-label-lg shadow-md hover:bg-primary transition-all transform hover:-translate-y-0.5"
             >
               <span className="material-symbols-outlined text-xl leading-none">bolt</span>
               <span>Mulai Percakapan Baru</span>
@@ -42,23 +43,23 @@ export default function HeroSection({ onNavigate }: { onNavigate: (p: PageId) =>
             <button
               type="button"
               onClick={() => onNavigate("agent-capabilities")}
-              className="inline-flex items-center gap-space-sm px-space-lg py-3 rounded-full bg-surface-container-lowest text-on-surface font-label-lg text-label-lg shadow-sm hover:bg-surface-container transition-all"
+              className="glass inline-flex items-center gap-space-sm px-space-lg py-3 rounded-full text-on-surface font-label-lg text-label-lg shadow-sm hover:shadow-md transition-all"
             >
-              <span className="material-symbols-outlined text-xl text-secondary">schema</span>
+              <span className="material-symbols-outlined text-xl text-primary">schema</span>
               <span>Jelajahi Kapabilitas Agent</span>
             </button>
           </div>
 
           <div className="flex items-center gap-space-lg pt-space-sm text-on-surface-variant font-label-sm text-label-sm">
             <div className="flex items-center gap-space-xs">
-              <span className="font-bold text-primary">*</span>
+              <span className="font-bold text-primary">✦</span>
               <span>LATENCY: 12ms</span>
             </div>
             <div className="flex items-center gap-space-xs">
               <span className="font-bold text-tertiary">★</span>
               <span>TOKEN EFFICIENCY: 99.4%</span>
             </div>
-            <div className="flex items-center gap-space-xs">
+            <div className="hidden sm:flex items-center gap-space-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>ZERO HUMAN OVERHEAD</span>
             </div>
@@ -66,97 +67,85 @@ export default function HeroSection({ onNavigate }: { onNavigate: (p: PageId) =>
         </div>
 
         <div className="w-full lg:w-5/12 flex justify-center lg:justify-end">
-          <OrbitalArt />
+          <GlassPanel />
         </div>
       </div>
     </section>
   );
 }
 
-/** Inline orbital art — the decorative half of the hero card. */
-function OrbitalArt() {
+/** Panel kaca ungu — kartu chat mini + bar metrik ala referensi. */
+function GlassPanel() {
   return (
-    <div className="relative w-full max-w-md bg-gradient-to-b from-primary to-primary-container p-6 rounded-3xl text-on-primary shadow-xl overflow-hidden">
-      <div className="pointer-events-none absolute -right-16 -top-16 w-72 h-72 rounded-full border border-white/20 flex items-center justify-center">
-        <div className="w-52 h-52 rounded-full border border-white/15 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-full border border-white/25 flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full bg-white/20" />
-          </div>
-        </div>
+    <div className="glass relative w-full max-w-md rounded-[28px] p-5 shadow-xl overflow-hidden">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-gradient-to-br from-primary/30 to-tertiary-container/40 blur-2xl" />
+      <div className="pointer-events-none absolute -left-10 -bottom-14 h-56 w-56 rounded-full bg-secondary-fixed/50 blur-2xl" />
+
+      <div className="flex items-center justify-between pb-4 relative z-10">
+        <span className="rounded-full border border-primary/25 bg-white/70 px-3 py-1 font-label-sm text-label-sm uppercase tracking-wider text-primary backdrop-blur-md">
+          Georgio Core v2.4
+        </span>
+        <span className="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface-variant">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          Live
+        </span>
       </div>
 
-      <div className="pointer-events-none absolute top-10 right-14 flex items-center gap-1 opacity-90">
-        <span className="text-tertiary-fixed font-label-lg text-label-lg">* 01/</span>
-        <span className="material-symbols-outlined text-tertiary-fixed text-sm">filter_vintage</span>
-      </div>
-
-      <div className="flex items-center justify-between pb-space-lg relative z-10">
-        <div className="flex items-center gap-space-xs">
-          <span className="px-space-sm py-0.5 rounded-full bg-white/20 font-label-sm text-label-sm uppercase tracking-wider backdrop-blur-md">
-            Georgio Core v2.4
-          </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        </div>
-        <span className="font-label-md text-label-md text-primary-fixed">AGENTIC GRAPH #882</span>
-      </div>
-
-      <div className="bg-surface-container-lowest text-on-surface rounded-2xl p-space-md shadow-md space-y-space-sm relative z-10">
+      <div className="rounded-2xl bg-white/80 p-4 shadow-sm space-y-3 relative z-10 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-space-sm">
-            <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-tertiary-container text-white">
               <span className="material-symbols-outlined text-lg">smart_toy</span>
             </div>
             <div>
               <div className="font-headline-sm text-headline-sm leading-tight text-on-surface">
                 Georgio Orchestrator
               </div>
-              <div className="font-label-sm text-label-sm text-secondary">Status: Autonomous Mode Ready</div>
+              <div className="font-label-sm text-label-sm text-secondary">Autonomous Mode Ready</div>
             </div>
           </div>
-          <span className="px-2 py-1 rounded bg-secondary-container/60 text-on-secondary-container font-label-sm text-label-sm font-semibold">
+          <span className="rounded bg-primary/10 px-2 py-1 font-label-sm text-label-sm font-semibold text-primary">
             99.4% OPT
           </span>
         </div>
 
-        <div className="p-space-sm rounded-xl bg-surface-container-low font-label-sm text-label-sm space-y-1 text-on-surface-variant">
+        <div className="space-y-1 rounded-xl bg-surface-container-low/80 p-3 font-label-sm text-label-sm text-on-surface-variant">
           <div className="flex items-center gap-2">
-            <span className="text-primary font-bold">›</span>
-            <span className="text-on-surface font-medium">Pipeline Initialized:</span>
-            <span className="text-secondary">4 specialized nodes synced</span>
+            <span className="font-bold text-primary">›</span>
+            <span className="font-medium text-on-surface">Pipeline Initialized:</span>
+            <span>4 nodes synced</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-primary font-bold">›</span>
-            <span>Context vector depth:</span>
-            <span className="font-label-sm text-primary font-semibold">16,384 tokens</span>
+            <span className="font-bold text-primary">›</span>
+            <span>Context depth:</span>
+            <span className="font-semibold text-primary">16,384 tokens</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-primary font-bold">›</span>
-            <span className="text-emerald-600 font-semibold">Execution: Active stream verified (12ms)</span>
+            <span className="font-bold text-primary">›</span>
+            <span className="font-semibold text-emerald-600">Stream verified (12ms)</span>
           </div>
         </div>
 
-        <div className="pt-space-xs">
-          <div className="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mb-1">
+        <div className="pt-1">
+          <div className="mb-1 flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
             <span>Inference Throughput</span>
-            <span className="text-primary font-semibold">3.84x Base Model</span>
+            <span className="font-semibold text-primary">3.84x Base</span>
           </div>
-          <div className="w-full h-8 bg-surface-container rounded-lg overflow-hidden flex items-end px-1 pt-1">
-            <svg viewBox="0 0 200 24" preserveAspectRatio="none" className="w-full h-full" aria-hidden>
-              <polyline
-                points="0,20 15,16 30,18 45,10 60,13 75,6 90,9 105,4 120,8 135,3 150,6 165,2 180,5 200,1"
-                fill="none"
-                stroke="#0048cc"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+          <svg viewBox="0 0 200 24" preserveAspectRatio="none" className="h-8 w-full" aria-hidden>
+            <polyline
+              points="0,20 15,16 30,18 45,10 60,13 75,6 90,9 105,4 120,8 135,3 150,6 165,2 180,5 200,1"
+              fill="none"
+              stroke="#7c3aed"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-white/80 font-label-sm text-label-sm relative z-10">
-        <span>© 2024-2025 GEORGIO DESIGN SYSTEMS</span>
-        <span>AUTO-SYNC ENABLED</span>
+      <div className="mt-4 flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant relative z-10">
+        <span className="uppercase tracking-wider">Design Resources</span>
+        <span>2025 July</span>
       </div>
     </div>
   );

@@ -263,7 +263,7 @@ export default function Studio({
 
   const composer = (
     <div className="w-full">
-      <div className="flex w-full items-end gap-2 rounded-[28px] border border-surface-container-high bg-surface-container-lowest py-2 pl-5 pr-2 shadow-md transition-shadow focus-within:shadow-lg focus-within:border-primary/30">
+      <div className="glass flex w-full items-end gap-2 rounded-[28px] py-2 pl-5 pr-2 shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-primary/40">
         <textarea
           ref={taRef}
           value={input}
@@ -296,7 +296,7 @@ export default function Studio({
             disabled={!input.trim()}
             title="Kirim"
             aria-label="Kirim pesan"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-all hover:bg-primary-container hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-tertiary-container text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
           >
             <span className="material-symbols-outlined text-xl leading-none">arrow_upward</span>
           </button>
@@ -312,7 +312,7 @@ export default function Studio({
         <div
           role="tablist"
           aria-label="Mode Georgio"
-          className="inline-flex items-center gap-0.5 rounded-full bg-surface-container-low p-1"
+          className="glass inline-flex items-center gap-0.5 rounded-full p-1"
         >
           {MODES.map((m) => {
             const active = mode === m;
@@ -325,7 +325,7 @@ export default function Studio({
                 onClick={() => !running && setMode(m)}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-label-lg text-label-lg transition-all ${
                   active
-                    ? "bg-surface-container-lowest text-on-surface shadow-sm"
+                    ? "bg-on-surface text-white shadow-md"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -361,26 +361,30 @@ export default function Studio({
       </div>
 
       {isEmpty ? (
-        /* ---------- Gemini empty state: centered greeting + hero composer ---------- */
-        <div className="flex flex-col items-center px-2 pb-6 pt-10 sm:pt-16">
-          <h1 className="max-w-2xl text-center font-headline-lg text-headline-lg text-on-surface sm:text-[44px] sm:leading-[52px]">
+        /* ---------- Violet Glass empty state ---------- */
+        <div className="relative flex flex-col items-center overflow-hidden rounded-[28px] border border-white/60 px-4 pb-8 pt-12 sm:pt-16 shadow-lg violet-wash">
+          <div className="violet-grid pointer-events-none absolute inset-0" />
+          <span className="relative font-label-md text-label-md uppercase tracking-[0.22em] text-on-surface-variant/70">
+            Design Resources
+          </span>
+          <h1 className="display-tight relative mt-2 max-w-2xl text-center font-headline-lg text-headline-lg text-on-surface sm:text-[52px] sm:leading-[50px]">
             Tulis apa adanya.
             <br />
-            <span className="bg-gradient-to-r from-primary via-primary-container to-tertiary-container bg-clip-text text-transparent">
-              Georgio yang merapikan.
+            <span className="bg-gradient-to-r from-on-surface via-primary to-tertiary-container bg-clip-text text-transparent">
+              Georgio yang merapikan✦
             </span>
           </h1>
-          <p className="mt-3 max-w-md text-center font-body-md text-body-md text-on-surface-variant">
+          <p className="relative mt-3 max-w-md text-center font-body-md text-body-md text-on-surface-variant">
             {MODE_META[mode].hint}
           </p>
-          <div className="mt-8 w-full max-w-3xl">{composer}</div>
-          <div className="mt-6 grid w-full max-w-3xl grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="relative mt-8 w-full max-w-3xl">{composer}</div>
+          <div className="relative mt-6 grid w-full max-w-3xl grid-cols-1 gap-2 sm:grid-cols-2">
             {(SUGGESTIONS[mode] ?? SUGGESTIONS.tanya).slice(0, 4).map((s) => (
               <button
                 key={s.label}
                 type="button"
                 onClick={() => setInput(s.text)}
-                className="group flex items-center justify-between gap-3 rounded-2xl border border-surface-container-high bg-surface-container-lowest px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+                className="glass group flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:shadow-md hover:border-primary/40"
               >
                 <span className="min-w-0">
                   <span className="block truncate font-body-md text-body-md text-on-surface">{s.label}</span>
@@ -419,8 +423,8 @@ export default function Studio({
                 if (m.role === "user") {
                   return (
                     <div key={m.id} className="flex justify-end">
-                      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-surface-container px-5 py-3 sm:max-w-[75%]">
-                        <p className="whitespace-pre-wrap break-words font-body-lg text-body-lg leading-relaxed text-on-surface">
+                      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-gradient-to-br from-primary to-tertiary-container px-5 py-3 shadow-md sm:max-w-[75%]">
+                        <p className="whitespace-pre-wrap break-words font-body-lg text-body-lg leading-relaxed text-white">
                           {m.content}
                         </p>
                       </div>
@@ -432,7 +436,7 @@ export default function Studio({
                 return (
                   <div key={m.id} className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-tertiary-container text-white">
                         <span className="material-symbols-outlined text-sm leading-none">smart_toy</span>
                       </span>
                       <span className="font-label-md text-label-md text-on-surface-variant">

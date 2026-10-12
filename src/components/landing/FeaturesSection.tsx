@@ -1,22 +1,22 @@
 import type { PageId } from "../../lib/pages";
 
-/** Core capabilities grid — the three pillars of the agent. */
+/** Core capabilities — kartu kaca + ikon gradasi ungu. */
 const FEATURES = [
   {
     icon: "stream",
-    label: "STREAM ENGINE",
+    label: "Stream Engine",
     title: "Mengalir, bukan menyembur",
     body: "Jawaban muncul perlahan, kata demi kata. Kamu bisa hentikan kapan saja — seperti menyela teman yang sedang bercerita.",
   },
   {
     icon: "hub",
-    label: "MODE SWITCHER",
+    label: "Mode Switcher",
     title: "Satu alur, dua cara",
     body: "Mau ngobrol bebas atau minta diringkas? Cukup ganti mode. Riwayatmu tetap tersimpan, tidak hilang saat pindah.",
   },
   {
     icon: "shield_lock",
-    label: "OWNER SCOPED",
+    label: "Owner Scoped",
     title: "Data terisolasi per akun",
     body: "Memory Graph memakai aturan owner-scoped: satu pengguna tidak pernah bisa membaca data pengguna lain. Tanpa login, chat tetap jalan.",
   },
@@ -28,13 +28,11 @@ export default function FeaturesSection() {
       <div className="max-w-7xl mx-auto flex flex-col gap-space-lg">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-sm">
           <div>
-            <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
-              <span>* CORE CAPABILITIES</span>
-              <span>—</span>
-              <span className="text-on-surface-variant font-normal">Apa yang Georgio mampu</span>
+            <div className="font-label-md text-label-md uppercase tracking-[0.22em] text-on-surface-variant/70">
+              Core Capabilities
             </div>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">
-              Dibangun untuk bekerja, bukan sekadar chat
+            <h2 className="display-tight font-headline-lg text-headline-lg text-on-surface mt-2">
+              Dibangun untuk bekerja, <span className="text-primary">bukan sekadar chat</span>
             </h2>
           </div>
         </div>
@@ -43,14 +41,14 @@ export default function FeaturesSection() {
           {FEATURES.map((f) => (
             <article
               key={f.label}
-              className="group flex flex-col justify-between bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+              className="glass group flex flex-col justify-between p-space-lg rounded-[24px] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="space-y-space-md">
-                <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-tertiary-container text-white shadow-md group-hover:scale-110 transition-transform">
                   <span className="material-symbols-outlined text-2xl">{f.icon}</span>
                 </div>
                 <div>
-                  <div className="font-label-sm text-label-sm text-primary font-semibold mb-1">{f.label}</div>
+                  <div className="font-label-sm text-label-sm text-primary font-semibold mb-1 uppercase tracking-[0.14em]">{f.label}</div>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">{f.title}</h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">
                     {f.body}
@@ -105,14 +103,14 @@ const AGENTS = [
 
 export function AgentsSection({ onNavigate }: { onNavigate: (p: PageId) => void }) {
   return (
-    <section className="w-full bg-surface-container-low px-margin py-space-xl rounded-xl">
+    <section className="violet-wash w-full px-margin py-space-xl rounded-[28px] border border-white/60 shadow-sm">
       <div className="max-w-7xl mx-auto flex flex-col gap-space-xl">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
           <div>
-            <span className="font-label-sm text-label-sm text-primary font-semibold tracking-wider uppercase">
+            <span className="font-label-sm text-label-sm text-on-surface-variant/70 font-semibold tracking-[0.22em] uppercase">
               Multi-Specialist Fleet
             </span>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">Persona Agen Khusus</h2>
+            <h2 className="display-tight font-headline-lg text-headline-lg text-on-surface mt-2">Persona Agen Khusus</h2>
           </div>
           <div className="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -124,12 +122,12 @@ export function AgentsSection({ onNavigate }: { onNavigate: (p: PageId) => void 
           {AGENTS.map((a) => (
             <article
               key={a.name}
-              className="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
+              className="glass p-space-md rounded-[24px] shadow-sm flex flex-col justify-between hover:shadow-lg transition-shadow"
             >
               <div>
-                <div className="relative w-full h-32 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center">
-                  <span className="material-symbols-outlined text-5xl text-secondary/40">{a.icon}</span>
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-surface-container-lowest/90 font-label-sm text-label-sm text-primary font-semibold">
+                <div className="relative w-full h-28 rounded-2xl overflow-hidden mb-space-md bg-gradient-to-br from-primary/15 via-tertiary-container/20 to-secondary-fixed/40 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-5xl text-primary/50">{a.icon}</span>
+                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/85 font-label-sm text-label-sm text-primary font-semibold backdrop-blur-md">
                     {a.role}
                   </span>
                 </div>
@@ -144,7 +142,7 @@ export function AgentsSection({ onNavigate }: { onNavigate: (p: PageId) => void 
               <button
                 type="button"
                 onClick={() => onNavigate("agent-capabilities")}
-                className="w-full inline-flex items-center justify-center gap-space-xs rounded-full bg-surface-container-low text-on-surface font-label-md text-label-md py-space-sm hover:bg-primary hover:text-on-primary transition-colors"
+                className="w-full inline-flex items-center justify-center gap-space-xs rounded-full bg-on-surface text-surface-container-lowest font-label-md text-label-md py-space-sm hover:bg-primary transition-colors"
               >
                 Delegasikan
                 <span className="material-symbols-outlined text-base">arrow_forward</span>

@@ -62,8 +62,8 @@ export default function SessionsAndTelemetry({
         icon: mode === "tanya" ? "description" : "draw",
         iconBg:
           mode === "tanya"
-            ? "bg-primary-fixed"
-            : "bg-secondary-fixed",
+            ? "bg-primary/10 text-primary"
+            : "bg-tertiary-container/30 text-tertiary",
         state: last?.role === "assistant" && last.content ? ("done" as const) : ("active" as const),
       },
     ];
@@ -90,12 +90,12 @@ export default function SessionsAndTelemetry({
         <div className="w-full lg:w-7/12 flex flex-col space-y-space-md">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-space-xs text-secondary font-label-md text-label-md">
-                <span className="text-primary font-bold">* LOGS</span>
+              <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
+                <span className="font-bold">✦ Logs</span>
                 <span>—</span>
-                <span>Riwayat Percakapan</span>
+                <span className="text-on-surface-variant/70 font-normal uppercase tracking-[0.18em]">Riwayat Percakapan</span>
               </div>
-              <h3 className="font-headline-md text-headline-md text-on-surface mt-1">Sesi Aktif Terakhir</h3>
+              <h3 className="display-tight font-headline-md text-headline-md text-on-surface mt-1">Sesi Aktif Terakhir</h3>
             </div>
             <span className="font-label-md text-label-md text-primary">{sessions.length} sesi</span>
           </div>
@@ -106,10 +106,10 @@ export default function SessionsAndTelemetry({
                 key={s.id}
                 type="button"
                 onClick={s.id === "empty" ? onOpen : onOpen}
-                className="w-full p-space-md rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-space-md text-left"
+                className="glass w-full p-space-md rounded-[24px] shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-space-md text-left"
               >
                 <div className="flex items-center gap-space-md min-w-0">
-                  <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-primary` + " " + s.iconBg}>
+                  <div className={`w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center` + " " + s.iconBg}>
                     <span className="material-symbols-outlined">{s.icon}</span>
                   </div>
                   <div className="min-w-0">
@@ -117,7 +117,7 @@ export default function SessionsAndTelemetry({
                       {s.title}
                     </h4>
                     <div className="flex items-center gap-space-sm mt-1">
-                      <span className="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm">
                         {s.agents}
                       </span>
                       <span className="font-label-sm text-label-sm text-secondary">{s.when}</span>
@@ -143,7 +143,7 @@ export default function SessionsAndTelemetry({
         </div>
 
         {/* Right: telemetry inspector */}
-        <div className="w-full lg:w-5/12 flex flex-col justify-between bg-surface-container-lowest p-space-lg rounded-3xl shadow-sm">
+        <div className="glass w-full lg:w-5/12 flex flex-col justify-between p-space-lg rounded-[28px] shadow-sm">
           <div>
             <div className="flex items-center justify-between pb-space-sm">
               <div className="flex items-center gap-space-xs">
@@ -178,7 +178,7 @@ export default function SessionsAndTelemetry({
               ))}
             </div>
 
-            <div className="mt-space-lg p-space-md rounded-2xl bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant space-y-1">
+            <div className="mt-space-lg p-space-md rounded-2xl bg-primary/5 border border-primary/10 font-label-sm text-label-sm text-on-surface-variant space-y-1">
               <div className="text-primary font-semibold">* SYSTEM HEURISTIC NOTE:</div>
               <div className="leading-relaxed">
                 &quot;All agent sub-routines running with continuous contextual memory caching. Next scheduled
@@ -190,7 +190,7 @@ export default function SessionsAndTelemetry({
           <button
             type="button"
             onClick={onOpen}
-            className="mt-space-lg w-full inline-flex items-center justify-center gap-space-xs rounded-full bg-inverse-surface text-inverse-on-surface font-label-lg text-label-lg py-space-sm hover:opacity-90 transition-opacity"
+            className="mt-space-lg w-full inline-flex items-center justify-center gap-space-xs rounded-full bg-on-surface text-surface-container-lowest font-label-lg text-label-lg py-space-sm hover:bg-primary transition-colors"
           >
             <span className="material-symbols-outlined text-base leading-none">terminal</span>
             Buka Terminal
