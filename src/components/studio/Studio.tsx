@@ -6,6 +6,7 @@ import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
 import { filesToAttachments, formatBytes } from "../../lib/media";
 import type { RemotionSettings } from "../../lib/remotion-settings";
+import { recapPropsFromThreads } from "../../lib/remotion-settings";
 import { FeedbackRow } from "./QuickSuggestions";
 import ChatVideoBlock from "./ChatVideoBlock";
 import { SUGGESTIONS } from "./QuickSuggestions";
@@ -132,11 +133,15 @@ export default function Studio({
   const [mode, setMode] = useState<AgentMode>("tanya");
   // Single source of truth di Studio biar kirim langsung render — parent cuma mirror.
   const [threads, setThreadsInternal] = useState<Threads>(() => controlledThreads ?? loadThreads());
+  // Ref hanya jadi cache "nilai terakhir" untuk event handler (send/clear/pickFiles).
+  // Disinkronkan di effect, bukan saat render — hindari cascading render & akses-ref-saat-render.
   const threadsRef = useRef<Threads>(threads);
-  threadsRef.current = threads;
   const onThreadsChangeRef = useRef(onThreadsChange);
-  onThreadsChangeRef.current = onThreadsChange;
   const prevControlledSigRef = useRef<string | null>(controlledThreads ? JSON.stringify(controlledThreads) : null);
+  useEffect(() => {
+    threadsRef.current = threads;
+    onThreadsChangeRef.current = onThreadsChange;
+  });
   useEffect(() => {
     if (controlledThreads === undefined) return;
     const sig = JSON.stringify(controlledThreads);
@@ -304,13 +309,13 @@ export default function Studio({
       setRunning(false);
       abortRef.current = null;
     }
-  }, [input, pending, running, mode]);
+  }, [input, pending, running, mode, setThreads]);
 
   const clearThread = useCallback(() => {
     setMediaNotice(null);
     setPending([]);
     setThreads((t) => ({ ...t, [mode]: [] }));
-  }, [mode]);
+  }, [mode, setThreads]);
 
   /** Minta Georgio membuat video recap dari thread saat ini. */
   const sendVideoRequest = useCallback(async () => {
@@ -332,7 +337,6 @@ export default function Studio({
     setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
     setRunning(true);
     try {
-      const { recapPropsFromThreads } = await import("../../lib/remotion-settings");
       const recap = recapPropsFromThreads(base);
       const compRaw = remotion.composition as string;
       const comp = compRaw === "GeorgioIntro" ? "GeorgioIntro" : compRaw === "WebsiteReview" ? "WebsiteReview" : "ChatRecap";
@@ -380,7 +384,7 @@ export default function Studio({
     } finally {
       setRunning(false);
     }
-  }, [running, remotion, mode]);
+  }, [running, remotion, mode, setThreads]);
 
   const statusText =
     live === null ? "menunggu sapaan pertama" : live ? "agent live — streaming" : "AI gratis di browser";

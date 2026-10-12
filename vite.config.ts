@@ -8,12 +8,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Split the heavy vendor libs so the first paint is not blocked by them.
-        manualChunks: {
-          react: ["react", "react-dom", "react-router-dom"],
-          cloudbase: ["@cloudbase/js-sdk"],
-          // Player Remotion (~300KB) dipisah supaya first paint chat tetap ringan.
-          remotion: ["remotion", "@remotion/player"],
+        // Vite 8 (rolldown) tidak dukung manualChunks objek — pakai advancedChunks.
+        // Split vendor berat supaya first paint chat tetap ringan.
+        advancedChunks: {
+          groups: [
+            { name: "react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: "cloudbase", test: /node_modules[\\/]@cloudbase[\\/]/ },
+            // Player Remotion (~300KB) dipisah supaya first paint chat ringan.
+            { name: "remotion", test: /node_modules[\\/](remotion|@remotion)[\\/]/ },
+          ],
         },
       },
     },

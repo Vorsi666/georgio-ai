@@ -47,7 +47,7 @@ function buildUniversalAnswer(prompt: string, keys: string[]): string {
   const isHowTo = /^(bagaimana|cara|gimana|tutorial|step|langkah)/i.test(trimmed);
   const isWhy = /^(kenapa|mengapa|why)/i.test(trimmed);
   const isWhat = /^(apa|apakah|what|definisi|pengertian)/i.test(trimmed);
-  const isMath = /[0-9]\s*[\+\-\*\/\×\÷\=]|hitung|rumus|persamaan|integral|derivat/i.test(trimmed);
+  const isMath = /[0-9]\s*[+*/×÷=-]|hitung|rumus|persamaan|integral|derivat/i.test(trimmed);
   const isCode = /```|function|const |let |import |def |class |<html|SELECT |FROM |api|endpoint/i.test(trimmed);
   const topic = keys.slice(0, 3).join(" · ") || trimmed.split(/\s+/).slice(0, 5).join(" ");
   const core = trimmed.length > 220 ? `${trimmed.slice(0, 220)}…` : trimmed;

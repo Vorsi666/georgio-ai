@@ -52,15 +52,16 @@ export default function App() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  function handleHash() {
-    const raw = window.location.hash.replace(/^#\/?/, "");
-    if (raw && isPageId(raw)) setPage(raw);
-  }
-
+  // Baca hash saat mount + dengarkan navigasi hash (Beranda ⇄ Chat ⇄ System Settings).
+  // setState di dalam effect memang disengaja (sumber data = URL), bukan cascading render.
   useEffect(() => {
-    handleHash();
-    window.addEventListener("hashchange", handleHash);
-    return () => window.removeEventListener("hashchange", handleHash);
+    const onHash = () => {
+      const raw = window.location.hash.replace(/^#\/?/, "");
+      if (raw && isPageId(raw)) setPage(raw);
+    };
+    onHash();
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
   function go(next: PageId) {

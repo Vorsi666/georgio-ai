@@ -40,6 +40,8 @@ export default function MemoryGraph({ signedIn, onSignIn }: Props) {
     }
   }, [signedIn]);
 
+  // Muat data dari storage saat signedIn berubah — sumber data di luar React,
+  // jadi pemanggilan di effect ini disengaja.
   useEffect(() => {
     void refresh();
   }, [refresh]);
