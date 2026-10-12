@@ -21,6 +21,8 @@
   "dependencies": {
     "@cloudbase/js-sdk": "^3.10.2",
     "@remotion/player": "^4.0.535",
+    "@remotion/web-renderer": "4.0.535",
+    "@remotion/webcodecs": "4.0.535",
     "lucide-react": "^1.43.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

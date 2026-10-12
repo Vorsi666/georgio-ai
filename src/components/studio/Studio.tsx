@@ -8,6 +8,7 @@ import { filesToAttachments, formatBytes } from "../../lib/media";
 import type { RemotionCompositionId, RemotionSettings } from "../../lib/remotion-settings";
 import { recapPropsFromThreads } from "../../lib/remotion-settings";
 import { canRenderVideoInBrowser, compositionFromPrompt, detectVideoIntent } from "../../lib/video-intent";
+import { compositionLabel, renderVideoInBrowser } from "../../lib/render-video";
 import { FeedbackRow } from "./QuickSuggestions";
 import ChatVideoBlock from "./ChatVideoBlock";
 import { SUGGESTIONS } from "./QuickSuggestions";
@@ -232,8 +233,10 @@ export default function Studio({
   );
 
   /**
-   * Render video Remotion dan suntikkan Player-nya langsung ke bubble asisten.
-   * Dipakai dua jalur: (1) user mengetik "buat video …", (2) tombol "Buat video".
+   * Render video Remotion LANGSUNG di browser (WebCodecs) → MP4, lalu kirim ke chat.
+   * Tidak perlu GitHub Actions. Progres nyata per frame dikirim ke bubble.
+   * Dipakai tiga jalur: (1) user ketik "buat video …", (2) tombol "Buat video",
+   * (3) user pilih komposisi di System Settings lalu klik Render.
    */
   const renderVideoInto = useCallback(
     async (
@@ -244,60 +247,99 @@ export default function Studio({
     ): Promise<void> => {
       const settings = remotion;
       if (!settings?.enabled) return;
-      const recap = recapPropsFromThreads(thread);
       const comp = forcedComposition ?? compositionFromPrompt(promptText, settings.composition);
-      const label =
-        comp === "GeorgioIntro" ? "Georgio Intro" : comp === "WebsiteReview" ? "Website Review" : "Chat Recap";
+      const label = compositionLabel(comp);
+      const ctrl = abortRef.current ?? new AbortController();
 
-      const estimatedBytes = thread.reduce(
-        (sum, m) => sum + (m.attachments ?? []).reduce((s, a) => s + (a.size || 0), 0),
-        0,
-      );
-      const budget = canRenderVideoInBrowser(estimatedBytes);
-      const lines: string[] = [
-        `Siap! 🎬 **${label}** langsung muncul di bawah — jalan di **GitHub / Vercel**.`,
+      const setRender = (render: NonNullable<ChatMessage["render"]>) =>
+        setThreads((t) => ({ ...t, [mode]: t[mode].map((m) => (m.id === asstId ? { ...m, render } : m)) }));
+
+      // 1) Siapkan bubble: judul + isi video + progres 0%
+      const recap = recapPropsFromThreads(thread);
+      const intro = [
+        `Siap! 🎬 Aku bikin **${label}** sekarang — langsung di browsermu, tanpa GitHub.`,
         ``,
-        `## Isi videonya`,
         ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
-        ``,
-        `▶️ Tekan play di player bawah — **${settings.width}×${settings.height}**, ${settings.fps} fps, ${settings.durationSec} dtk. Ubah di **System Settings** kapan saja.`,
-      ];
-      if (budget.ok) {
-        lines.push(``, `Mau MP4 final? **GitHub → Actions → Render Remotion Video → Run workflow → ${comp}** (artifact 7 hari).`);
-      } else {
-        lines.push(``, `⚠️ ${budget.reason}`);
-      }
-
-      const reply = lines.join("\n");
-      for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
-        if (abortRef.current?.signal.aborted) break;
-        setThreads((t) => ({
-          ...t,
-          [mode]: t[mode].map((m) =>
-            m.id === asstId
-              ? { ...m, content: (t[mode].find((x) => x.id === asstId)?.content ?? "") + chunk }
-              : m,
-          ),
-        }));
-        await new Promise((r) => setTimeout(r, 12));
-      }
+      ].join("\n");
       setThreads((t) => ({
         ...t,
         [mode]: t[mode].map((m) =>
           m.id === asstId
             ? {
                 ...m,
-                video: {
-                  composition: comp,
-                  durationSec: settings.durationSec,
-                  width: settings.width,
-                  height: settings.height,
-                  fps: settings.fps,
+                content: intro,
+                render: {
+                  progress: 0,
+                  renderedFrames: 0,
+                  encodedFrames: 0,
+                  totalFrames: 0,
+                  status: "Menyiapkan render…",
+                  etaMs: null,
                 },
               }
             : m,
         ),
       }));
+
+      // 2) Render sungguhan → progres per frame
+      const outcome = await renderVideoInBrowser(comp, settings, thread, {
+        signal: ctrl.signal,
+        onProgress: (s) =>
+          setRender({
+            progress: s.progress,
+            renderedFrames: s.renderedFrames,
+            encodedFrames: s.encodedFrames,
+            totalFrames: s.totalFrames,
+            status: s.status,
+            etaMs: s.etaMs,
+          }),
+      });
+
+      // 3) Kirim hasilnya (atau jujur gagal)
+      if (outcome.ok && outcome.dataUrl) {
+        const size = outcome.bytes ?? Math.round((outcome.dataUrl.length * 3) / 4);
+        setThreads((t) => ({
+          ...t,
+          [mode]: t[mode].map((m) =>
+            m.id === asstId
+              ? {
+                  ...m,
+                  content:
+                    `${intro}\n\nSelesai! 🎉 **${label}** sudah jadi — ` +
+                    `**${settings.width}×${settings.height}**, ${settings.fps} fps, ${settings.durationSec} dtk, ${formatBytes(size)}. ` +
+                    `Tinggal unduh dari player di bawah.`,
+                  render: undefined,
+                  video: {
+                    composition: comp,
+                    dataUrl: outcome.dataUrl,
+                    mimeType: outcome.mimeType,
+                    bytes: size,
+                    durationSec: settings.durationSec,
+                    width: settings.width,
+                    height: settings.height,
+                    fps: settings.fps,
+                  },
+                }
+              : m,
+          ),
+        }));
+      } else {
+        const budget = canRenderVideoInBrowser(0);
+        setThreads((t) => ({
+          ...t,
+          [mode]: t[mode].map((m) =>
+            m.id === asstId
+              ? {
+                  ...m,
+                  content:
+                    `${intro}\n\n⚠️ **Belum bisa dirender di browser ini.** ${outcome.error ?? budget.reason ?? ""}\n\n` +
+                    `Opsi lain: **GitHub → Actions → Render Remotion Video → Run workflow → ${label}** (artifact 7 hari).`,
+                  render: { progress: 0, renderedFrames: 0, encodedFrames: 0, totalFrames: 0, status: "Gagal", etaMs: null, done: true, error: outcome.error },
+                }
+              : m,
+          ),
+        }));
+      }
     },
     [mode, remotion, setThreads],
   );
@@ -732,9 +774,9 @@ export default function Studio({
                         renderRich(m.content, m.id)
                       )}
                     </div>
-                    {m.video && (
+                    {(m.video || m.render) && (
                       <div className="pl-8 pt-3">
-                        <ChatVideoBlock video={m.video} messages={messages} />
+                        <ChatVideoBlock video={m.video} messages={messages} progress={m.render} />
                       </div>
                     )}
                     {isLastAssistant && m.content && m.content !== "…" && (

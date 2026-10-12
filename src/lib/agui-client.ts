@@ -19,10 +19,24 @@ export interface ChatAttachment {
   dataUrl: string;
 }
 
+export interface VideoRenderProgress {
+  /** 0..1 */
+  progress: number;
+  renderedFrames: number;
+  encodedFrames: number;
+  totalFrames: number;
+  status: string;
+  etaMs: number | null;
+  done?: boolean;
+  error?: string;
+}
+
 export interface ChatVideo {
   composition: string;
-  /** data: URL thumbnail (frame pertama) — lokal, tidak di-upload */
-  thumbDataUrl?: string;
+  /** MP4 hasil render di browser (data: URL) — kalau ada, video langsung diputar di chat */
+  dataUrl?: string;
+  mimeType?: string;
+  bytes?: number;
   durationSec: number;
   width: number;
   height: number;
@@ -37,8 +51,10 @@ export interface ChatMessage {
   at?: number;
   /** lampiran foto/video — hanya di pesan user */
   attachments?: ChatAttachment[];
-  /** video Remotion yang langsung terkirim ke chat (embed Player) */
+  /** video Remotion yang langsung terkirim ke chat (MP4 hasil render / embed Player) */
   video?: ChatVideo;
+  /** progres renderwhile video sedang dibuat */
+  render?: VideoRenderProgress;
 }
 
 interface WireMessage {
