@@ -152,14 +152,23 @@ export default function Studio({
   const standalone = variant === "standalone";
   const isEmpty = messages.length === 0;
 
+  const threadsRef = useRef(threads);
+  threadsRef.current = threads;
+
   useEffect(() => {
     try {
       localStorage.setItem("georgio-threads", JSON.stringify(threads));
     } catch {
       /* storage full or blocked — chat still works in-memory */
     }
-    onThreadsChange?.(threads);
-  }, [threads, onThreadsChange]);
+  }, [threads]);
+
+  // Keep the parent mirror in sync without feeding updates back into the loop.
+  const onThreadsChangeRef = useRef(onThreadsChange);
+  onThreadsChangeRef.current = onThreadsChange;
+  useEffect(() => {
+    onThreadsChangeRef.current?.(threads);
+  }, [threads]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -183,10 +192,11 @@ export default function Studio({
     const prompt = input.trim();
     if (!prompt || running) return;
     setInput("");
-    const userMsg: ChatMessage = { id: rid(), role: "user", content: prompt };
+    const cur = threadsRef.current;
+    const userMsg: ChatMessage = { id: rid(), role: "user", content: prompt, at: Date.now() };
     const asstId = rid();
-    const base = [...threads[mode], userMsg];
-    setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "" }] }));
+    const base = [...cur[mode], userMsg];
+    setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
     setRunning(true);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
