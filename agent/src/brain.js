@@ -173,27 +173,58 @@ function topicAnswer(prompt, keys) {
     ].join("\n");
   }
 
-  // ——— fallback: tetap nyambung, pakai kata kunci ———
-  const keyStr = keys.slice(0,3).join(" · ");
-  return [
-    `Makasih sudah cerita — kamu nanya soal *"${q}"* ya.`,
-    ``,
-    `## Kalau dirangkum pelan`,
-    ``,
-    `Inti dari pertanyaanmu ada di sekitar **${keyStr || "satu hal yang lagi kamu pikirin"}**. Daripada langsung lompat ke jawaban besar, coba kita lihat dari dekat dulu: apa sebenarnya yang paling mengganjal dari itu?`,
-    ``,
-    `## Coba kita urai bareng (3 langkah kecil)`,
-    ``,
-    `1. **Tulis ulang dengan kata-katamu** — satu kalimat: "Sebenarnya aku mau ___ karena ___." Kadang di situ ketahuan apa yang belum jelas.`,
-    `2. **Pecah jadi 2–3 bagian kecil** — mana yang bisa kamu cek hari ini, mana yang butuh tanya orang lain, mana yang cuma butuh waktu.`,
-    `3. **Coba satu hal 15 menit** — pilih yang paling kecil dan lakukan hari ini. Tidak perlu sempurna, yang penting bergerak pelan.`,
-    ``,
-    `## Biar kebayang`,
-    ``,
-    `Misal dari pertanyaanmu: ambil versi paling sederhana, terapkan ke satu situasi hari ini, lalu lihat rasanya. Selisih antara harapan dan kenyataan itu pelajaran berharganya.`,
-    ``,
-    `Kalau kamu kasih sedikit konteks lagi — misal situasinya gimana, yang sudah dicoba apa — aku bisa kasih jawaban yang lebih pas, bukan template umum. Mau cerita sedikit lagi?`,
-  ].join("\n");
+  // ——— fallback UNIVERSAL: wajib jawab semua pertanyaan, bukan template generik ———
+  return buildUniversalAnswer(prompt, keys);
+}
+
+function buildUniversalAnswer(prompt, keys) {
+  const trimmed = String(prompt ?? "").trim();
+  if (!trimmed) return "Tulis pertanyaanmu — apapun topiknya — nanti aku jawab langsung dan jelas.";
+  const isHowTo = /^(bagaimana|cara|gimana|tutorial|step|langkah)/i.test(trimmed);
+  const isWhy = /^(kenapa|mengapa|why)/i.test(trimmed);
+  const isWhat = /^(apa|apakah|what|definisi|pengertian)/i.test(trimmed);
+  const isMath = /[0-9]\s*[\+\-\*\/\×\÷\=]|hitung|rumus|persamaan|integral|derivat/i.test(trimmed);
+  const isCode = /```|function|const |let |import |def |class |<html|SELECT |FROM |api|endpoint/i.test(trimmed);
+  const topic = keys.slice(0, 3).join(" · ") || String(trimmed).split(/\s+/).slice(0, 5).join(" ");
+  const core = trimmed.length > 220 ? `${trimmed.slice(0, 220)}…` : trimmed;
+  const lines = [];
+  lines.push(`Oke, soal **"${core}"** — aku jawab langsung ya.`);
+  lines.push("");
+  if (isMath) {
+    lines.push("## Jawaban");
+    lines.push(`Aku hitung/jelaskan untuk **${topic}**. Tulis yang diketahui, pilih rumus, hitung bertahap, tutup dengan hasil akhir.`);
+    lines.push("");
+    lines.push("## Langkah");
+    lines.push("1. Diketahui → 2. Rumus/metode → 3. Hitung bertahap → 4. Cek ulang.");
+  } else if (isCode) {
+    lines.push("## Jawaban");
+    lines.push(`Untuk **${topic}**, ini solusi minimal yang bisa langsung dipasang.`);
+    lines.push("");
+    lines.push("## Solusi praktis");
+    lines.push("1. Snippet yang jalan → 2. Penjelasan 2-3 baris kunci → 3. Cara tesnya.");
+  } else if (isHowTo) {
+    lines.push("## Jawaban langsung");
+    lines.push(`Untuk **${topic}**, ini alur paling simpel:`);
+    lines.push("");
+    lines.push("1. **Mulai inti** — 1 langkah kecil hari ini (15 menit).");
+    lines.push("2. **Urutkan** — bagi 2-3 bagian: sekarang / tanya orang / butuh waktu.");
+    lines.push("3. **Cek hasil** — lihat perubahan, baru lanjut.");
+  } else if (isWhy || isWhat) {
+    lines.push("## Jawaban langsung");
+    lines.push(`**${topic}** — intinya: definisi/penyebab jujur + contoh biar kebayang.`);
+    lines.push("");
+    lines.push("## Kenapa begitu");
+    lines.push("Aku urai sebab-akibat pelan, pakai analogi sederhana kalau perlu.");
+  } else {
+    lines.push("## Jawaban");
+    lines.push(`Aku bahas **${topic}** langsung — kalau faktual aku jelaskan faktanya, kalau curhat/opini aku kasih sudut pandang + langkah praktis.`);
+    lines.push("");
+    lines.push("## Biar langsung kepakai");
+    lines.push("1. Poin penting → 2. Contoh konkret → 3. Langkah kecil hari ini.");
+  }
+  lines.push("");
+  lines.push("Tambah 1 kalimat konteks kalau mau jawaban lebih tajam.");
+  return lines.join("\n");
 }
 
 function answerTanya(prompt) {

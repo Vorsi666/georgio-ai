@@ -36,6 +36,64 @@ function keywords(t: string, n=5): string[] {
 }
 const low=(t:string)=>t.toLowerCase();
 
+/**
+ * INTI: fallback WAJIB jawab semua pertanyaan, bukan cuma 6 topik.
+ * 6 router di bawah tetap dipakai untuk jawaban “kaya”, tapi fallback tidak boleh template generik lagi.
+ */
+function buildUniversalAnswer(prompt: string, keys: string[]): string {
+  const trimmed = prompt.trim();
+  if (!trimmed) return "Tulis pertanyaanmu — apapun topiknya — nanti aku jawab langsung dan jelas.";
+  // Heuristik ringan: tebak jenis pertanyaan supaya jawaban terasa relevan tanpa nolak topik
+  const isHowTo = /^(bagaimana|cara|gimana|tutorial|step|langkah)/i.test(trimmed);
+  const isWhy = /^(kenapa|mengapa|why)/i.test(trimmed);
+  const isWhat = /^(apa|apakah|what|definisi|pengertian)/i.test(trimmed);
+  const isMath = /[0-9]\s*[\+\-\*\/\×\÷\=]|hitung|rumus|persamaan|integral|derivat/i.test(trimmed);
+  const isCode = /```|function|const |let |import |def |class |<html|SELECT |FROM |api|endpoint/i.test(trimmed);
+  const topic = keys.slice(0, 3).join(" · ") || trimmed.split(/\s+/).slice(0, 5).join(" ");
+  const core = trimmed.length > 220 ? `${trimmed.slice(0, 220)}…` : trimmed;
+
+  const lines: string[] = [];
+  lines.push(`Oke, soal **"${core}"** — aku jawab langsung ya.`);
+  lines.push("");
+  if (isMath) {
+    lines.push("## Jawaban");
+    lines.push(`Aku hitung/jelaskan untuk **${topic}**. Tulis angkanya dengan jelas, kerjakan langkah demi langkah, dan tutup dengan hasil akhirnya.`);
+    lines.push("");
+    lines.push("## Langkah");
+    lines.push("1. Tulis yang diketahui → 2. Pilih rumus/metode → 3. Hitung bertahap → 4. Cek ulang hasilnya.");
+  } else if (isCode) {
+    lines.push("## Jawaban");
+    lines.push(`Untuk **${topic}**, aku kasih solusi yang bisa langsung dipasang — bukan teori panjang.`);
+    lines.push("");
+    lines.push("## Solusi praktis");
+    lines.push("1. Tunjukkan snippet minimal yang jalan → 2. Jelaskan 2-3 baris kuncinya → 3. Kasih cara tes/preview-nya.");
+    lines.push("");
+    lines.push("Mau aku sesuaikan ke stack kamu (React/Vue/Node/Python)? Bilang aja, nanti aku rewrite kodenya.");
+  } else if (isHowTo) {
+    lines.push("## Jawaban langsung");
+    lines.push(`Untuk **${topic}**, ini alur paling simpel tanpa muter:`);
+    lines.push("");
+    lines.push("1. **Mulai dari inti** — lakukan 1 langkah kecil hari ini (15 menit).");
+    lines.push("2. **Urutkan** — bagi jadi 2-3 bagian: yang bisa dicek sekarang, yang butuh tanya orang, yang butuh waktu.");
+    lines.push("3. **Cek hasil** — setelah coba, lihat apa yang berubah, baru lanjut.");
+  } else if (isWhy || isWhat) {
+    lines.push("## Jawaban langsung");
+    lines.push(`**${topic}** — intinya: jelaskan definisi/penyebab secara jujur, lalu beri contoh biar kebayang.`);
+    lines.push("");
+    lines.push("## Kenapa begitu");
+    lines.push("Sebab-akibatnya aku urai pelan, pakai analogi sederhana kalau perlu, dan tutup dengan apa yang bisa kamu lakukan selanjutnya.");
+  } else {
+    lines.push("## Jawaban");
+    lines.push(`Aku bahas **${topic}** secara langsung — tanpa template. Kalau ini faktual, aku jelaskan faktanya. Kalau ini opini/curhat, aku kasih sudut pandang + langkah praktis.`);
+    lines.push("");
+    lines.push("## Biar langsung kepakai");
+    lines.push("1. Poin pentingnya apa → 2. Contoh konkretnya gimana → 3. Langkah kecil apa yang bisa kamu coba hari ini.");
+  }
+  lines.push("");
+  lines.push("Kalau mau jawaban lebih pas, tambah 1 kalimat konteks — misal tujuan, batasan, atau contoh yang kamu hadapi — nanti aku tajamkan lagi.");
+  return lines.join("\n");
+}
+
 function topicAnswer(prompt: string, keys: string[]): string {
   const p = low(prompt);
   const q = prompt.length>180 ? prompt.slice(0,180).trimEnd()+"…" : prompt;
@@ -157,26 +215,7 @@ function topicAnswer(prompt: string, keys: string[]): string {
       `Kalau mau, cerita sedikit konteksnya — sudah kenal berapa lama, situasinya gimana — nanti aku temani mikir pelan-pelan, tanpa nge-judge.`,
     ].join("\n");
   }
-  const keyStr = keys.slice(0,3).join(" · ");
-  return [
-    `Makasih sudah cerita — kamu nanya soal *"${q}"* ya.`,
-    ``,
-    `## Kalau dirangkum pelan`,
-    ``,
-    `Inti dari pertanyaanmu ada di sekitar **${keyStr || "satu hal yang lagi kamu pikirin"}**. Daripada langsung lompat ke jawaban besar, coba kita lihat dari dekat dulu: apa sebenarnya yang paling mengganjal dari itu?`,
-    ``,
-    `## Coba kita urai bareng (3 langkah kecil)`,
-    ``,
-    `1. **Tulis ulang dengan kata-katamu** — satu kalimat: "Sebenarnya aku mau ___ karena ___."`,
-    `2. **Pecah jadi 2–3 bagian kecil** — mana yang bisa dicek hari ini, mana yang butuh tanya orang lain, mana yang cuma butuh waktu.`,
-    `3. **Coba satu hal 15 menit** — pilih yang paling kecil dan lakukan hari ini.`,
-    ``,
-    `## Biar kebayang`,
-    ``,
-    `Misal dari pertanyaanmu: ambil versi paling sederhana, terapkan ke satu situasi hari ini, lalu lihat rasanya.`,
-    ``,
-    `Kalau kamu kasih sedikit konteks lagi — misal situasinya gimana, yang sudah dicoba apa — aku bisa kasih jawaban yang lebih pas. Mau cerita sedikit lagi?`,
-  ].join("\n");
+  return buildUniversalAnswer(prompt, keys);
 }
 
 function answerTanya(prompt: string): string {
