@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { AgentMode, ChatMessage } from "../../lib/agui-client";
+import type { AgentMode, ChatAttachment, ChatMessage } from "../../lib/agui-client";
 import { rid, streamAgentReply } from "../../lib/agui-client";
 import { streamDemoReply } from "../../lib/demo-brain";
 import { callFreeAIWeb } from "../../lib/ai-free";
+import { filesToAttachments, formatBytes } from "../../lib/media";
+import type { RemotionSettings } from "../../lib/remotion-settings";
 import { FeedbackRow } from "./QuickSuggestions";
 import { SUGGESTIONS } from "./QuickSuggestions";
 
@@ -115,12 +117,15 @@ export default function Studio({
   threads: controlledThreads,
   onThreadsChange,
   variant = "embedded",
+  remotion,
 }: {
   /** When provided, threads live in the parent so chat survives navigation. */
   threads?: Record<AgentMode, ChatMessage[]>;
   onThreadsChange?: (t: Record<AgentMode, ChatMessage[]>) => void;
   /** Standalone fills the viewport; embedded keeps the compact landing height. */
   variant?: "standalone" | "embedded";
+  /** Remotion settings dari System Settings — tombol video muncul kalau enabled. */
+  remotion?: RemotionSettings;
 }) {
   const [mode, setMode] = useState<AgentMode>("tanya");
   const [localThreads, setLocalThreads] = useState<Record<AgentMode, ChatMessage[]>>(loadThreads);
@@ -144,9 +149,12 @@ export default function Studio({
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [live, setLive] = useState<boolean | null>(null);
+  const [pending, setPending] = useState<ChatAttachment[]>([]);
+  const [mediaNotice, setMediaNotice] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const messages = threads[mode];
   const standalone = variant === "standalone";
@@ -188,12 +196,30 @@ export default function Studio({
     setRunning(false);
   }, []);
 
+  const pickFiles = useCallback(
+    async (list: FileList | null) => {
+      if (!list || list.length === 0) return;
+      const { added, rejected } = await filesToAttachments(list, pending.length);
+      if (added.length > 0) setPending((p) => [...p, ...added]);
+      setMediaNotice(rejected.length > 0 ? rejected.join(" ") : null);
+    },
+    [pending.length],
+  );
+
   const send = useCallback(async () => {
     const prompt = input.trim();
-    if (!prompt || running) return;
+    const files = pending;
+    if ((!prompt && files.length === 0) || running) return;
     setInput("");
+    setPending([]);
     const cur = threadsRef.current;
-    const userMsg: ChatMessage = { id: rid(), role: "user", content: prompt, at: Date.now() };
+    const userMsg: ChatMessage = {
+      id: rid(),
+      role: "user",
+      content: prompt,
+      at: Date.now(),
+      attachments: files.length > 0 ? files : undefined,
+    };
     const asstId = rid();
     const base = [...cur[mode], userMsg];
     setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
@@ -222,7 +248,11 @@ export default function Studio({
       // 2) free AI in-browser, WITH conversation history so follow-ups stay on topic
       try {
         acc = "";
-        const history = base.map((m) => ({ role: m.role, content: m.content }));
+        const history = base.map((m) => ({
+          role: m.role,
+          content: m.content,
+          attachments: m.attachments?.map((a) => ({ kind: a.kind, name: a.name })),
+        }));
         const text = await callFreeAIWeb(mode, history);
         if (text && text.length > 20) {
           const reply = `${MODE_META[mode].label} · Georgio AI\n\n${text}`;
@@ -252,18 +282,127 @@ export default function Studio({
       setRunning(false);
       abortRef.current = null;
     }
-  }, [input, running, mode, threads]);
+  }, [input, pending, running, mode, threads]);
 
   const clearThread = useCallback(() => {
     setThreads((t) => ({ ...t, [mode]: [] }));
   }, [mode]);
+
+  /** Minta Georgio membuat video recap dari thread saat ini. */
+  const sendVideoRequest = useCallback(async () => {
+    if (running || !remotion?.enabled) return;
+    const cur = threadsRef.current;
+    const userCount = cur[mode].filter((m) => m.role === "user").length;
+    if (userCount === 0) {
+      setMediaNotice("Kirim minimal 1 pesan dulu sebelum buat video.");
+      return;
+    }
+    const userMsg: ChatMessage = {
+      id: rid(),
+      role: "user",
+      content: "Buatkan video recap dari obrolan ini 🎬",
+      at: Date.now(),
+    };
+    const asstId = rid();
+    const base = [...cur[mode], userMsg];
+    setThreads((t) => ({ ...t, [mode]: [...base, { id: asstId, role: "assistant", content: "", at: Date.now() }] }));
+    setRunning(true);
+    try {
+      const { recapPropsFromThreads } = await import("../../lib/remotion-settings");
+      const recap = recapPropsFromThreads(base);
+      const comp = remotion.composition === "GeorgioIntro" ? "GeorgioIntro" : "ChatRecap";
+      const label = comp === "GeorgioIntro" ? "Georgio Intro" : "Chat Recap";
+      const reply = [
+        `Siap! 🎬 Aku siapkan **${label}** dari obrolan ini.`,
+        ``,
+        `## Isi videonya`,
+        ...recap.lines.map((l, i) => `${i + 1}. ${l}`),
+        ``,
+        `Buka **System Settings** untuk preview langsung (${remotion.width}×${remotion.height}, ${remotion.fps} fps, ${remotion.durationSec} dtk), lalu render MP4 final dengan:`,
+        ``,
+        `\`npx remotion render ${comp}\``,
+        ``,
+        `Mau ubah judul/resolusi/durasi dulu? Atur di System Settings, lalu bilang "buatkan videonya".`,
+      ].join("\n");
+      for (const chunk of reply.match(/.{1,28}(\s+|$)/g) ?? [reply]) {
+        setThreads((t) => ({
+          ...t,
+          [mode]: t[mode].map((m) =>
+            m.id === asstId ? { ...m, content: (t[mode].find((x) => x.id === asstId)?.content ?? "") + chunk } : m,
+          ),
+        }));
+        await new Promise((r) => setTimeout(r, 12));
+      }
+      setLive(false);
+    } finally {
+      setRunning(false);
+    }
+  }, [running, remotion, mode]);
 
   const statusText =
     live === null ? "menunggu sapaan pertama" : live ? "agent live — streaming" : "AI gratis di browser";
 
   const composer = (
     <div className="w-full">
-      <div className="glass flex w-full items-end gap-2 rounded-[28px] py-2 pl-5 pr-2 shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-primary/40">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        className="hidden"
+        aria-label="Pilih foto atau video"
+        onChange={(e) => {
+          void pickFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {pending.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {pending.map((a) => (
+            <div
+              key={a.id}
+              className="glass flex items-center gap-2 rounded-2xl p-1.5 pr-2 shadow-sm"
+            >
+              {a.kind === "image" ? (
+                <img src={a.dataUrl} alt={a.name} className="h-12 w-12 rounded-xl object-cover" />
+              ) : (
+                <video src={a.dataUrl} className="h-12 w-12 rounded-xl object-cover" muted playsInline preload="metadata" />
+              )}
+              <div className="flex min-w-0 flex-col">
+                <span className="max-w-32 truncate font-label-md text-label-md text-on-surface">{a.name}</span>
+                <span className="font-label-sm text-label-sm text-outline">
+                  {a.kind === "image" ? "Foto" : "Video"} · {formatBytes(a.size)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPending((p) => p.filter((x) => x.id !== a.id))}
+                title="Hapus lampiran"
+                aria-label={`Hapus ${a.name}`}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined text-base leading-none">close</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {mediaNotice && (
+        <p role="status" className="mb-2 rounded-xl bg-error-container px-3 py-1.5 font-body-sm text-body-sm text-on-error-container">
+          {mediaNotice}
+        </p>
+      )}
+      <div className="glass flex w-full items-end gap-2 rounded-[28px] py-2 pl-2 pr-2 shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-primary/40">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={running}
+          title="Kirim foto atau video"
+          aria-label="Kirim foto atau video"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-30"
+        >
+          <span className="material-symbols-outlined text-xl leading-none">add_a_photo</span>
+        </button>
         <textarea
           ref={taRef}
           value={input}
@@ -277,7 +416,7 @@ export default function Studio({
           rows={1}
           placeholder={MODE_META[mode].placeholder}
           aria-label="Tanya Georgio"
-          className="max-h-40 flex-1 bg-transparent py-2.5 font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none leading-relaxed"
+          className="max-h-40 min-w-0 flex-1 bg-transparent py-2.5 font-body-lg text-body-lg text-on-surface placeholder:text-outline focus:outline-none resize-none leading-relaxed"
         />
         {running ? (
           <button
@@ -293,7 +432,7 @@ export default function Studio({
           <button
             type="button"
             onClick={() => void send()}
-            disabled={!input.trim()}
+            disabled={(!input.trim() && pending.length === 0) || running}
             title="Kirim"
             aria-label="Kirim pesan"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-tertiary-container text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-25 disabled:hover:scale-100"
@@ -347,6 +486,19 @@ export default function Studio({
             <span className={`h-1.5 w-1.5 rounded-full ${running ? "animate-pulse bg-primary" : "bg-outline-variant"}`} />
             {live === null ? "Siap" : live ? "Live" : "Gratis"}
           </span>
+          {remotion?.enabled && (
+            <button
+              type="button"
+              onClick={() => void sendVideoRequest()}
+              disabled={running || messages.length === 0}
+              title="Buat video dari obrolan ini"
+              aria-label="Buat video dari obrolan ini"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary/10 px-3 font-label-md text-label-md text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-30"
+            >
+              <span className="material-symbols-outlined text-lg leading-none">movie</span>
+              <span className="hidden sm:inline">Buat video</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={clearThread}
@@ -421,12 +573,41 @@ export default function Studio({
               {messages.map((m, i) => {
                 const isLastAssistant = m.role === "assistant" && i === messages.length - 1;
                 if (m.role === "user") {
+                  const files = m.attachments ?? [];
                   return (
                     <div key={m.id} className="flex justify-end">
-                      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-gradient-to-br from-primary to-tertiary-container px-5 py-3 shadow-md sm:max-w-[75%]">
-                        <p className="whitespace-pre-wrap break-words font-body-lg text-body-lg leading-relaxed text-white">
-                          {m.content}
-                        </p>
+                      <div className="flex max-w-[85%] flex-col gap-2 rounded-[22px] rounded-br-md bg-gradient-to-br from-primary to-tertiary-container px-4 py-3 shadow-md sm:max-w-[75%]">
+                        {files.length > 0 && (
+                          <div className={`grid gap-2 ${files.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                            {files.map((a) =>
+                              a.kind === "image" ? (
+                                <img
+                                  key={a.id}
+                                  src={a.dataUrl}
+                                  alt={a.name}
+                                  title={a.name}
+                                  className="max-h-56 w-full rounded-xl object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <video
+                                  key={a.id}
+                                  src={a.dataUrl}
+                                  title={a.name}
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  className="max-h-56 w-full rounded-xl bg-black/40"
+                                />
+                              ),
+                            )}
+                          </div>
+                        )}
+                        {m.content.trim() && (
+                          <p className="whitespace-pre-wrap break-words px-1 font-body-lg text-body-lg leading-relaxed text-white">
+                            {m.content}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );

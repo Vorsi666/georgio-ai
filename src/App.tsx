@@ -5,11 +5,14 @@ import MemoryGraphPage from "./pages/MemoryGraphPage";
 import WorkspacePage from "./pages/WorkspacePage";
 import LandingPage from "./pages/LandingPage";
 import ChatWorkspacePage from "./pages/ChatWorkspacePage";
+import SystemSettingsPage from "./pages/SystemSettingsPage";
 import { getSession, signOut } from "./utils/cloudbase";
 import type { SessionUser } from "./utils/cloudbase";
 import { isPageId } from "./lib/pages";
 import type { PageId } from "./lib/pages";
 import type { AgentMode, ChatMessage } from "./lib/agui-client";
+import type { RemotionSettings } from "./lib/remotion-settings";
+import { loadRemotionSettings } from "./lib/remotion-settings";
 
 const EMPTY_THREADS: Record<AgentMode, ChatMessage[]> = { tanya: [], ringkas: [] };
 
@@ -18,6 +21,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [threads, setThreads] = useState<Record<AgentMode, ChatMessage[]>>(EMPTY_THREADS);
+  const [remotion, setRemotion] = useState<RemotionSettings>(loadRemotionSettings);
 
   // Only getSession() counts as proof of login — never the deprecated login state.
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function App() {
           <div className="relative w-full flex-1 flex flex-col px-space-md lg:px-space-xl py-space-md gap-space-lg">
             {page === "beranda" && <LandingPage onNavigate={go} threads={threads} />}
             {page === "chat-workspace" && (
-              <ChatWorkspacePage threads={threads} onThreadsChange={setThreads} />
+              <ChatWorkspacePage threads={threads} onThreadsChange={setThreads} remotion={remotion} />
             )}
             {page === "memory-graph" && (
               <MemoryGraphPage signedIn={user !== null} onSignIn={() => setAuthOpen(true)} />
@@ -139,12 +143,7 @@ export default function App() {
               />
             )}
             {page === "system-settings" && (
-              <WorkspacePage
-                id="system-settings"
-                title="System Settings"
-                subtitle="Konfigurasi sistem"
-                icon="tune"
-              />
+              <SystemSettingsPage settings={remotion} onChange={setRemotion} />
             )}
           </div>
         </main>

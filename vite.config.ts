@@ -12,6 +12,8 @@ export default defineConfig({
         manualChunks: {
           react: ["react", "react-dom", "react-router-dom"],
           cloudbase: ["@cloudbase/js-sdk"],
+          // Player Remotion (~300KB) dipisah supaya first paint chat tetap ringan.
+          remotion: ["remotion", "@remotion/player"],
         },
       },
     },

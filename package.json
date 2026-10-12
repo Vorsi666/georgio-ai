@@ -8,17 +8,24 @@
     "build": "tsc -b && vite build",
     "lint": "eslint src/ --fix",
     "preview": "vite preview",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "remotion": "remotion studio",
+    "remotion:render": "remotion render",
+    "remotion:render:intro": "remotion render GeorgioIntro",
+    "remotion:render:recap": "remotion render ChatRecap"
   },
   "dependencies": {
     "@cloudbase/js-sdk": "3.4.7",
+    "@remotion/player": "4.0.534",
     "lucide-react": "^1.43.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^6.30.1"
+    "react-router-dom": "^6.30.1",
+    "remotion": "4.0.534"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@remotion/cli": "4.0.534",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",

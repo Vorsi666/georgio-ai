@@ -20,6 +20,7 @@ const MAX_ROUNDS = 2;
 export interface AITurn {
   role: "user" | "assistant";
   content: string;
+  attachments?: { kind: string; name: string }[];
 }
 
 const BASE_PERSONA = [
@@ -28,6 +29,7 @@ const BASE_PERSONA = [
   "(1) Jawab pertanyaan user secara LANGSUNG di kalimat pertama — jangan mengulang atau memparafrase pertanyaannya.",
   "(2) Kalau user bertanya 'kenapa' atau 'terus', pakai konteks percakapan sebelumnya, jangan jawab generik.",
   "(3) Jangan pakai sapaan pembuka seperti 'Hai!', 'Halo!', 'Mau tanya apa?' — langsung ke inti.",
+  "(4) Model teks ini TIDAK bisa melihat isi foto/video — kalau user melampirkan file, akui nama filenya, jangan berpura-pura melihat isinya, lalu bantu dari teks/konteks yang ada.",
   "(4) Jangan menutup dengan pertanyaan retoris atau kalimat seperti 'Mau aku bantu lagi?'.",
   "(5) Boleh pakai markdown singkat (## dan daftar bernomor) hanya jika isinya banyak.",
   "(6) Gaya: hangat dan natural seperti teman yang paham — bukan robot yang memberi jawaban exceedingly umum.",
@@ -71,7 +73,14 @@ export async function callFreeAIWeb(mode: string, history: AITurn[]): Promise<st
 
   const wire = turns
     .slice(-8) // recent window keeps the model focused on the real question
-    .map((t) => ({ role: t.role, content: t.content.slice(0, 4000) }));
+    .map((t) => {
+      const files = (t.attachments ?? [])
+        .map((a) => `[${a.kind === "image" ? "foto" : "video"}: ${a.name}]`)
+        .join(" ");
+      const text = t.content.trim();
+      const content = text && files ? `${text}\n(lampiran: ${files})` : text || (files ? `(lampiran: ${files})` : "");
+      return { role: t.role, content: content.slice(0, 4000) };
+    });
 
   const messages = [{ role: "system", content: sysFor(mode) }, ...wire];
 

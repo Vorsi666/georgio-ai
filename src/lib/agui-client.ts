@@ -9,12 +9,24 @@
 
 export type AgentMode = "tanya" | "ringkas";
 
+export interface ChatAttachment {
+  id: string;
+  kind: "image" | "video";
+  name: string;
+  mime: string;
+  size: number;
+  /** data: URL — disimpan lokal di browser, tidak diunggah ke mana pun */
+  dataUrl: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   /** epoch ms — drives the relative timestamps in the sessions list */
   at?: number;
+  /** lampiran foto/video — hanya di pesan user */
+  attachments?: ChatAttachment[];
 }
 
 interface WireMessage {
@@ -74,6 +86,16 @@ function applyEvent(payload: string, acc: { text: string }): string | null {
  * Send messages to the agent and stream the reply.
  * Resolves with the full assistant text when RUN finishes.
  */
+function describeForWire(m: ChatMessage): string {
+  const files = (m.attachments ?? [])
+    .map((a) => `[${a.kind === "image" ? "foto" : "video"}: ${a.name}]`)
+    .join(" ");
+  const text = m.content.trim();
+  if (text && files) return `${text}\n(lampiran: ${files})`;
+  if (text) return text;
+  return files ? `(lampiran: ${files})` : "";
+}
+
 export async function streamAgentReply(
   history: ChatMessage[],
   mode: AgentMode,
@@ -84,7 +106,7 @@ export async function streamAgentReply(
 
   const wire: WireMessage[] = [
     { id: rid(), role: "system", content: `mode:${mode}` },
-    ...history.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: m.content })),
+    ...history.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: describeForWire(m) })),
   ];
 
   const res = await fetch(`${base}/send-message`, {
