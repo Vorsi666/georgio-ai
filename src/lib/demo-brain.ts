@@ -1,6 +1,8 @@
 /**
- * Demo brain — mirror of agent/src/brain.js for Georgio AI.
- * Natural, nyambung, tidak template kaku. Sinkron dengan agent/src/brain.js.
+ * Demo brain — fallback when agent is unreachable.
+ * Aim for natural, helpful responses similar to Claude/GPT.
+ * Provide substantive answers with reasoning, examples, and actionable advice.
+ * Keep responses concise but informative, avoid excessive templating.
  */
 import type { AgentMode } from "./agui-client";
 
@@ -43,54 +45,161 @@ const low=(t:string)=>t.toLowerCase();
 function buildUniversalAnswer(prompt: string, keys: string[]): string {
   const trimmed = prompt.trim();
   if (!trimmed) return "Tulis pertanyaanmu — apapun topiknya — nanti aku jawab langsung dan jelas.";
-  // Heuristik ringan: tebak jenis pertanyaan supaya jawaban terasa relevan tanpa nolak topik
-  const isHowTo = /^(bagaimana|cara|gimana|tutorial|step|langkah)/i.test(trimmed);
-  const isWhy = /^(kenapa|mengapa|why)/i.test(trimmed);
-  const isWhat = /^(apa|apakah|what|definisi|pengertian)/i.test(trimmed);
-  const isMath = /[0-9]\s*[+*/×÷=-]|hitung|rumus|persamaan|integral|derivat/i.test(trimmed);
-  const isCode = /```|function|const |let |import |def |class |<html|SELECT |FROM |api|endpoint/i.test(trimmed);
-  const topic = keys.slice(0, 3).join(" · ") || trimmed.split(/\s+/).slice(0, 5).join(" ");
-  const core = trimmed.length > 220 ? `${trimmed.slice(0, 220)}…` : trimmed;
+  
+  // More sophisticated topic extraction
+  const words = trimmed.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  const stopWords = new Set(["yang", "dan", "di", "ke", "dari", "untuk", "dengan", "pada", "adalah", "ini", "itu", "sebagai", "oleh", "karena", "atau", "juga", "tidak", "akan", "ada", "bisa", "dapat", "dalam", "mereka", "kita", "kamu", "saya", "dia", "nya", "lah", "kah", "pun", "per", "hal", "cara", "agar", "supaya", "tentang", "antara", "setelah", "sebelum", "jika", "kalau", "saat", "ketika", "mana", "apa", "siapa", "berapa", "bagaimana", "mengapa", "yakni", "yaitu", "serta", "maupun", "tanpa", "sudah", "telah", "sedang", "masih", "hanya", "saja", "pun"]);
+  const meaningfulWords = words.filter(w => !stopWords.has(w));
+  const topic = meaningfulWords.slice(0, 5).join(" ") || trimmed.split(/\s+/).slice(0, 5).join(" ");
+  const core = trimmed.length > 200 ? `${trimmed.slice(0, 200)}…` : trimmed;
 
-  const lines: string[] = [];
-  lines.push(`Oke, soal **"${core}"** — aku jawab langsung ya.`);
-  lines.push("");
+  // More natural opening
+  const openings = [
+    `Mari kita bahas "${core}".`,
+    `Baik, tentang "${core}" — `,
+    `Pertanyaan bagus: "${core}".`,
+    `Aku akan menjelaskan "${core}" dengan jelas.`,
+    `Bagaimana dengan "${core}"? `
+  ];
+  const opening = openings[Math.floor(Math.random() * openings.length)];
+
+  const lines: string[] = [opening, ""];
+  
+  // Better structured responses
   if (isMath) {
-    lines.push("## Jawaban");
-    lines.push(`Aku hitung/jelaskan untuk **${topic}**. Tulis angkanya dengan jelas, kerjakan langkah demi langkah, dan tutup dengan hasil akhirnya.`);
+    lines.push("**Pemecahan Masalah Matematika**");
     lines.push("");
-    lines.push("## Langkah");
-    lines.push("1. Tulis yang diketahui → 2. Pilih rumus/metode → 3. Hitung bertahap → 4. Cek ulang hasilnya.");
+    lines.push(`Untuk menyelesaikan soal yang berkaitan dengan **${topic}**, berikut adalah pendekatan sistematis:`);
+    lines.push("");
+    lines.push("1. **Identifikasi yang diketahui dan yang ditanyakan**");
+    lines.push("   - Tulislah semua informasi yang diberikan dalam soal");
+    lines.push("   - Tentukanlah apa yang harus kita cari");
+    lines.push("");
+    lines.push("2. **Pilih rumus atau metode yang sesuai**");
+    lines.push("   - Pertimbangkan konsep matematika yang terkait");
+    lines.push("   - Jika perlu, ubah satuan agar konsisten");
+    lines.push("");
+    lines.push("3. **Lakukan perhitungan langkah demi langkah**");
+    lines.push("   - Tampilkan setiap langkah secara jelas");
+    lines.push("   - Sertakan penjelasan mengapa setiap langkah dilakukan");
+    lines.push("");
+    lines.push("4. **Periksa kembali hasilnya**");
+    lines.push("   - Verifikasi apakah jawaban masuk akal");
+    lines.push("   - Periksa kembali operasi aritmetika");
+    lines.push("   - Pastikan satuan yang sesuai");
+    lines.push("");
+    lines.push("Jika kamu bisa berbagi spesifikasi soal lengkap (angka, kondisi, atau konteks spesifik), aku bisa bantu menyelesaikannya langkah demi langkah.");
   } else if (isCode) {
-    lines.push("## Jawaban");
-    lines.push(`Untuk **${topic}**, aku kasih solusi yang bisa langsung dipasang — bukan teori panjang.`);
+    lines.push("**Solusi Pemrograman yang Praktis**");
     lines.push("");
-    lines.push("## Solusi praktis");
-    lines.push("1. Tunjukkan snippet minimal yang jalan → 2. Jelaskan 2-3 baris kuncinya → 3. Kasih cara tes/preview-nya.");
+    lines.push(`Untuk masalah yang berkaitan dengan **${topic}**, berikut adalah pendekatan yang bisa langsung diterapkan:`);
     lines.push("");
-    lines.push("Mau aku sesuaikan ke stack kamu (React/Vue/Node/Python)? Bilang aja, nanti aku rewrite kodenya.");
+    lines.push("1. **Pahami persyaratan masalah**");
+    lines.push("   - Apa input yang diperlukan?");
+    lines.push("   - Apa output yang diharapkan?");
+    lines.push("   - Ada batasan khusus (waktu, memori, dll)?");
+    lines.push("");
+    lines.push("2. **Rancang algoritma atau pendekatan**");
+    lines.push("   - Pertimbangkan struktur data yang sesuai");
+    lines.push("   - Pertimbangkan kompleksitas waktu dan ruang");
+    lines.push("   - Jika ada pustaka standar yang bisa digunakan, pertimbangkannya");
+    lines.push("");
+    lines.push("3. **Implementasi kode yang bersih**");
+    lines.push("   - Tulislah kode yang mudah dibaca dan dipahami");
+    lines.push("   - Gunakan penamaan variabel yang jelas");
+    lines.push("   - Tambahkan komentar untuk bagian yang kompleks");
+    lines.push("");
+    lines.push("4. **Uji dan validasi**");
+    lines.push("   - Uji dengan kasus contoh yang berbeda");
+    lines.push("   - Periksa edge case");
+    lines.push("   - Pastikan output sesuai ekspektasi");
+    lines.push("");
+    lines.push("Jika kamu bisa berbagi lebih detail tentang masalah spesifik yang kamu hadapi (bahasa pemrograman, konteks, atau contoh input/output), aku bisa memberikan solusi yang lebih tepat.");
   } else if (isHowTo) {
-    lines.push("## Jawaban langsung");
-    lines.push(`Untuk **${topic}**, ini alur paling simpel tanpa muter:`);
+    lines.push("**Panduan Langkah demi Langkah**");
     lines.push("");
-    lines.push("1. **Mulai dari inti** — lakukan 1 langkah kecil hari ini (15 menit).");
-    lines.push("2. **Urutkan** — bagi jadi 2-3 bagian: yang bisa dicek sekarang, yang butuh tanya orang, yang butuh waktu.");
-    lines.push("3. **Cek hasil** — setelah coba, lihat apa yang berubah, baru lanjut.");
+    lines.push(`Untuk mencapai tujuan terkait **${topic}**, berikut adalah pendekatan yang praktis dan dapat ditindaklanjuti:`);
+    lines.push("");
+    lines.push("1. **Mulai dengan fondasi yang kuat**");
+    lines.push("   - Pahami dasar-dasar sebelum melanjutkan ke konsep lanjutan");
+    lines.push("   - Fokus pada satu aspek pada satu waktu");
+    lines.push("");
+    lines.push("2. **Buat rencana belajar atau tindakan yang terstruktur**");
+    lines.push("   - Bagi tujuan besar menjadi langkah-langkah kecil yang terukur");
+    lines.push("   - Jadwalkan waktu konsisten untuk latihan atau implementasi");
+    lines.push("");
+    lines.push("3. **Latih secara konsisten dan dapatkan umpan balik**");
+    lines.push("   - Terapkan apa yang kamu pelajari dalam konteks nyata");
+    lines.push("   - Minta umpan balik dari orang yang lebih berpengalaman jika memungkinkan");
+    lines.push("   - Catat kemajuan dan area yang perlu diperbaiki");
+    lines.push("");
+    lines.push("4. **Iterasi dan perbaiki berdasarkan hasil**");
+    lines.push("   - Evaluasi secara berkala apa yang bekerja dan apa yang tidak");
+    lines.push("   - Sesuaikan pendekatan berdasarkan hasil dan pengalaman");
+    lines.push("   - Takut untuk mencoba pendekatan berbeda jika yang saat ini tidak efektif");
+    lines.push("");
+    lines.push("Jika kamu bisa berbagi lebih detail tentang latar belakang kamu, tujuan spesifik, atau keterbatasan waktu/sumber daya yang kamu hadapi, aku bisa membuatkan rencana yang lebih personalisasi.");
   } else if (isWhy || isWhat) {
-    lines.push("## Jawaban langsung");
-    lines.push(`**${topic}** — intinya: jelaskan definisi/penyebab secara jujur, lalu beri contoh biar kebayang.`);
+    lines.push("**Penjelasan Komprehensif**");
     lines.push("");
-    lines.push("## Kenapa begitu");
-    lines.push("Sebab-akibatnya aku urai pelan, pakai analogi sederhana kalau perlu, dan tutup dengan apa yang bisa kamu lakukan selanjutnya.");
+    lines.push(`Mari kita jelajah **${topic}** dari berbagai sudut pandang untuk mendapatkan pemahaman yang menyeluruh:`);
+    lines.push("");
+    lines.push("1. **Definisi dan konsep dasar**");
+    lines.push("   - Apa itu exactly?");
+    lines.push("   - Sejarah atau asal usulnya jika relevan");
+    lines.push("   - Konsep kunci yang perlu dipahami");
+    lines.push("");
+    lines.push("2. **Mekanisme atau prinsip kerja**");
+    lines.push("   - Bagaimana itu bekerja?");
+    lines.push("   - Prinsip atau hukum yang mengendalikannya");
+    lines.push("   - Faktor-faktor yang memengaruhi perilakunya");
+    lines.push("");
+    lines.push("3. **Contoh konkret dan aplikasi nyata**");
+    lines.push("   - Di mana kita menjumpainya dalam kehidupan sehari-hari?");
+    lines.push("   - Bagaimana itu digunakan dalam industri atau bidang spesifik?");
+    lines.push("   - Manfaat atau dampaknya apa?");
+    lines.push("");
+    lines.push("4. **Implikasi dan pertimbangan**");
+    lines.push("   - Apakah ada batasan atau tantangan?");
+    lines.push("   - Apakah ada pertimbangan etika atau keamanan?");
+    lines.push("   - Apa tren atau perkembangan terkini?");
+    lines.push("");
+    lines.push("Jika kamu memiliki aspek spesifik dari topik ini yang ingin kamu gali lebih dalam (misalnya aplikasi tertentu, kontroversi, atau hubungan dengan topik lain), aku bisa fokuskan penjelasan tersebut.");
   } else {
-    lines.push("## Jawaban");
-    lines.push(`Aku bahas **${topic}** secara langsung — tanpa template. Kalau ini faktual, aku jelaskan faktanya. Kalau ini opini/curhat, aku kasih sudut pandang + langkah praktis.`);
+    lines.push("**Penjelasan Seimbang dan Informative**");
     lines.push("");
-    lines.push("## Biar langsung kepakai");
-    lines.push("1. Poin pentingnya apa → 2. Contoh konkretnya gimana → 3. Langkah kecil apa yang bisa kamu coba hari ini.");
+    lines.push(`Mari kita bahas **${topic}** dengan pendekatan yang seimbang, mencakup berbagai aspek yang relevan:`);
+    lines.push("");
+    lines.push("1. **Konsep dasar dan latar belakang**");
+    lines.push("   - Apa yang perlu kita ketahui sebagai fondasi?");
+    lines.push("   - Sejarah atau konteks yang membantu memahaminya");
+    lines.push("   - Perbedaan dengan konsep serupa jika ada");
+    lines.push("");
+    lines.push("2. **Aspek penting dan detail yang relevan**");
+    lines.push("   - Apa elemen kunci yang membuatnya signifikan?");
+    lines.push("   - Bagaimana ini berkaitan dengan topik-topik terkait?");
+    lines.push("   - Apakah ada versi, jenis, atau klasifikasi yang relevan?");
+    lines.push("");
+    lines.push("3. **Manfaat, aplikasi, atau dampak**");
+    lines.push("   - Di mana dan bagaimana ini berguna?");
+    lines.push("   - Siapa yang biasanya terlibat atau menggunakannya?");
+    lines.push("   - Apa hasil atau output yang dihasilkan?");
+    lines.push("");
+    lines.push("4. **Pertimbangan praktis dan langkah selanjutnya**");
+    lines.push("   - Jika ingin mempelajari atau menerapkannya, dari mana sebaiknya memulai?");
+    lines.push("   - Apa sumber daya yang recomendasi untuk pembelajaran lebih lanjut?");
+    lines.push("   - Apakah ada praktek terbaik atau pedoman yang perlu diikuti?");
+    lines.push("");
+    lines.push("Agar aku bisa memberikan jawaban yang lebih spesifik dan berguna bagi kamu, bisakah kamu berbagi:");
+
+    lines.push("   - Tujuan spesifik kamu ingin mencapai terkait topik ini?");
+    lines.push("   - Tingkat pengalaman atau latar belakang kamu di area ini?");
+    lines.push("   - Keterbatasan spesifik (waktu, sumber daya, keahlian teknis) yang perlu dipertimbangkan?");
+    lines.push("   - Apakah ada aspek tertentu dari topik ini yang paling kamu minati atau ingin kamu fokuskan?");
   }
+  
   lines.push("");
-  lines.push("Kalau mau jawaban lebih pas, tambah 1 kalimat konteks — misal tujuan, batasan, atau contoh yang kamu hadapi — nanti aku tajamkan lagi.");
+  lines.push("Jika ada sesuatu yang kurang jelas atau kamu ingin saya fokuskan pada aspek tertentu, jangan ragu untuk memberi tahu saya!");
   return lines.join("\n");
 }
 

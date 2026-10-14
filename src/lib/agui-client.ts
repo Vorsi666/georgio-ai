@@ -130,60 +130,68 @@ export async function streamAgentReply(
   cb: StreamCallbacks,
 ): Promise<string> {
   const base = agentUrl();
-  if (!base) throw new Error("NO_AGENT_URL");
+  
+  // Try to use the agent service first
+  if (base) {
+    try {
+      const wire: WireMessage[] = [
+        { id: rid(), role: "system", content: `mode:${mode}` },
+        ...history.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: describeForWire(m) })),
+      ];
 
-  const wire: WireMessage[] = [
-    { id: rid(), role: "system", content: `mode:${mode}` },
-    ...history.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: describeForWire(m) })),
-  ];
+      const res = await fetch(`${base}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+        body: JSON.stringify({
+          threadId: `web-${mode}`,
+          runId: rid(),
+          messages: wire,
+          tools: [],
+          context: [],
+          state: {},
+          forwardedProps: {},
+        }),
+        signal: cb.signal,
+      });
 
-  const res = await fetch(`${base}/send-message`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({
-      threadId: `web-${mode}`,
-      runId: rid(),
-      messages: wire,
-      tools: [],
-      context: [],
-      state: {},
-      forwardedProps: {},
-    }),
-    signal: cb.signal,
-  });
+      if (res.ok && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        const acc = { text: "" };
 
-  if (!res.ok || !res.body) {
-    throw new Error(`Agent HTTP ${res.status}`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  const acc = { text: "" };
-
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-    for (const part of parts) {
-      const lines = part.split("\n").filter((l) => l.startsWith("data:"));
-      if (lines.length === 0) continue;
-      const payload = lines.map((l) => l.slice(5).trim()).join("\n");
-      if (!payload || payload === "[DONE]") continue;
-      const delta = applyEvent(payload, acc);
-      if (delta) cb.onToken(delta);
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() ?? "";
+          for (const part of parts) {
+            const lines = part.split("\n").filter((l) => l.startsWith("data:"));
+            if (lines.length === 0) continue;
+            const payload = lines.map((l) => l.slice(5).trim()).join("\n");
+            if (!payload || payload === "[DONE]") continue;
+            const delta = applyEvent(payload, acc);
+            if (delta) cb.onToken(delta);
+          }
+        }
+        if (buffer.trim()) {
+          const m = buffer.match(/data:\s*(\{.*\})/s);
+          if (m) {
+            const delta = applyEvent(m[1], acc);
+            if (delta) cb.onToken(delta);
+          }
+        }
+        return acc.text;
+      }
+    } catch (error) {
+      // If agent fails, fall back to demo brain
+      console.warn("Agent service unavailable, falling back to demo brain:", error);
     }
   }
-  if (buffer.trim()) {
-    const m = buffer.match(/data:\s*(\{.*\})/s);
-    if (m) {
-      const delta = applyEvent(m[1], acc);
-      if (delta) cb.onToken(delta);
-    }
-  }
-  return acc.text;
+  
+  // Fallback to demo brain
+  return streamDemoReply(history[history.length - 1] ?? { role: "user", content: "" }, mode, cb.onToken, cb.signal);
 }
 
 export { rid };

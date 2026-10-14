@@ -4,6 +4,7 @@ Studio AI Jepang yang tenang — **Ngobrol**, **Ringkas**, **Ide** — dengan ja
 
 - Frontend: React 19 + Vite + Tailwind · palet washi/sumi/akane, font Shippori Mincho + Zen Kaku Gothic New
 - Backend: `agent/` — custom AG-UI adapter di atas `@cloudbase/agent-server` + plugin AI gratis (Pollinations, no key)
+- Optional Python Agent Service: `python-agent/` — LangChain/LangGraph-based agent for enhanced reasoning (see python-agent/README.md)
 - Tanpa API key: otak deterministik topic-router + fallback demo lokal tetap nyambung
 
 ## ✨ Keamanan data — sudah diamankan sebelum deploy
